@@ -1,0 +1,115 @@
+/* ------------------------
+   FUNDO E ESTILO GERAL
+------------------------ */
+body {
+    background-color: #3f4f6b;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+footer { visibility: hidden; }
+h1, h2, h3, h4, h5 { color: #3f4f6b; }
+
+section[data-testid="stSidebar"] {
+    background-color: #cedeeb;
+}
+
+/* Sidebar: texto preto */
+section[data-testid="stSidebar"] * {
+    color: black !important;
+}
+
+/* Sidebar: inputs */
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] select,
+section[data-testid="stSidebar"] textarea,
+section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] * {
+    color: black !important;
+}
+
+/* ------------------------
+   BOTÕES DE POPOVER (📅, 🎛️ etc.)
+------------------------ */
+section[data-testid="stSidebar"] .stButton > button {
+    width: 100% !important;
+    color: black !important;
+    background-color: #3b4a5a !important;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+section[data-testid="stSidebar"] .stButton > button:disabled {
+    background-color: #5c6e7d !important;
+    color: black !important;
+}
+
+/* Diferencia por emoji */
+section[data-testid="stSidebar"] .stButton > button:has(span:contains("🧊")) {
+    background-color: #305f7a !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button:has(span:contains("🔧")) {
+    background-color: #51694d !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button:has(span:contains("📅")) {
+    background-color: #5a5b7a !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button:has(span:contains("🎛️")) {
+    background-color: #678b9a !important;
+}
+
+/* ------------------------
+   POPOVER INTERNO (modal que abre)
+------------------------ */
+div[role="dialog"] {
+    background-color: #f1f1f1 !important;
+    color: black !important;
+    border-radius: 8px !important;
+    padding: 1rem;
+}
+
+div[role="dialog"] * {
+    color: black !important;
+}
+
+div[role="dialog"] input,
+div[role="dialog"] select,
+div[role="dialog"] .stSelectbox div[data-baseweb="select"] * {
+    color: black !important;
+}
+
+/* ------------------------
+   EXPANDER (🔧 Ajustar Pesos dos Eixos)
+------------------------ */
+details[data-testid="stExpander"] summary {
+    background-color: #51694d !important;
+    border: 1px solid #51694d;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    color: black !important;
+    font-size: 0.9rem;
+}
+
+details[data-testid="stExpander"] {
+    background-color: #f1f1f1 !important;  /* <- cinza claro igual ao popover */
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    padding: 1rem;
+}
+
+details[data-testid="stExpander"] * {
+    color: black !important;
+}
+
+details[data-testid="stExpander"] input,
+details[data-testid="stExpander"] select,
+details[data-testid="stExpander"] .stSelectbox div[data-baseweb="select"] * {
+    color: black !important;
+}
