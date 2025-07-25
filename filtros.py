@@ -123,7 +123,7 @@ def sidebar_filtros(df):
     agrup_cols = ["empresa", "unidade", "conselho", "tipologia", filtro_col]
     df_filtro = (
         df_filtrado
-        .groupby(agrup_cols, dropna=False)
+        .groupby(agrup_cols, dropna=False, observed=False)
         .mean(numeric_only=True)
         .reset_index()
     )

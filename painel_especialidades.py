@@ -47,7 +47,7 @@ def exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, valor_periodo):
         delta = valor_real - valor_meta
 
         simbolo = "↑" if delta >= 0 else "↓"
-        cor = "green" if delta >= 0 else "red"
+        cor = "#588157" if delta >= 0 else "#b04c52"
         texto_delta = f"<span style='color:{cor}; font-size:16px;'>{simbolo} {abs(delta):,}".replace(",", ".") + "</span>"
 
         valor_pct = linha.get(f"pct_{esp}", None)
@@ -59,7 +59,7 @@ def exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, valor_periodo):
         fig = None
         if valor_pct is not None:
             valor_plotado = min(valor_pct, 100)
-            cor_donut = "green" if valor_pct >= 100 else "red"
+            cor_donut = "#588157" if valor_pct >= 100 else "#b04c52"
             fig = go.Figure(go.Pie(
                 values=[valor_plotado, 100 - valor_plotado],
                 hole=0.65,

@@ -221,7 +221,7 @@ def grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_sel, competencia_se
 
     # Adiciona colunas auxiliares
     df_custo["cor_realizado"] = df_custo.apply(
-        lambda row: "crimson" if row["soma_custo_realizado"] > row["soma_meta"] else "#54B479", axis=1
+        lambda row: "#b04c52" if row["soma_custo_realizado"] > row["soma_meta"] else "#588157", axis=1
     )
 
     fig = go.Figure()
@@ -283,9 +283,15 @@ def grafico_pizza_receita(receita_prevista, receita_realizada):
         return go.Figure()
 
     perc_exec = receita_realizada / receita_prevista * 100
-    labels = ["Executado", "A executar"]
-    values = [perc_exec, 100 - perc_exec]
-    colors = ["#d67327", "#3f4f6b"]  #Laranja e Azul
+
+    if perc_exec <= 100:
+        labels = ["Executado", "A executar"]
+        values = [perc_exec, 100 - perc_exec]
+        colors = ["#d67327", "#3f4f6b"]
+    else:
+        labels = ["Executado (100%)", f"Excedente ({perc_exec - 100:.0f}%)"]
+        values = [100, perc_exec - 100]
+        colors = ["#d67327", "#bc4b51"]  # laranja + vermelho p/ excesso
 
     fig = go.Figure(data=[go.Pie(
         labels=labels,
