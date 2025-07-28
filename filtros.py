@@ -87,7 +87,7 @@ def sidebar_filtros(df):
                 options=colunas_numericas,
                 default=["nota_custo", "nota_caixa", "nota_producao"],
                 format_func=lambda x: nome_map[x],
-                max_selections=4
+                max_selections=3
             )
             pesos_x = [seletor_peso(nome_map[col], key=f"peso_x_{col}") for col in colunas_x]
 
@@ -97,7 +97,7 @@ def sidebar_filtros(df):
                 options=colunas_numericas,
                 default=["nota_orcamento", "nota_receita", "nota_nps"],
                 format_func=lambda x: nome_map[x],
-                max_selections=4
+                max_selections=3
             )
             pesos_y = [seletor_peso(nome_map[col], key=f"peso_y_{col}") for col in colunas_y]
 
