@@ -16,15 +16,34 @@ cores_quadrantes = {
     "Baixo X, Baixo Y": "#e64937"
 }
 
+# Função para aplicar cor no hover
+def colorir_nota(valor):
+    if valor < 0:
+        return f"<span style='color:#e64937'>{valor:.2f}</span>"
+    elif valor < 0.7:
+        return f"<span style='color:#ff9999'>{valor:.2f}</span>"
+    elif valor < 1:
+        return f"<span style='color:#a7cf30'>{valor:.2f}</span>"
+    elif valor < 1.2:
+        return f"<span style='color:#13eb66'>{valor:.2f}</span>"
+    else:
+        return f"<span style='color:#0066cc'>{valor:.2f}</span>"
+
 def grafico_fourbox(
     df, empresa_sel, competencia_sel, unidade_sel, coluna_periodo,
     colunas_x, pesos_x, colunas_y, pesos_y, nome_map
 ):
     # Filtro principal
-    df_filtro = df[
-        (df["empresa"] == empresa_sel) &
-        (df[coluna_periodo] == competencia_sel)
-    ].copy()
+    if isinstance(competencia_sel, (list, tuple)):
+        df_filtro = df[
+            (df["empresa"] == empresa_sel) &
+            (df[coluna_periodo].isin(competencia_sel))
+        ].copy()
+    else:
+        df_filtro = df[
+            (df["empresa"] == empresa_sel) &
+            (df[coluna_periodo] == competencia_sel)
+        ].copy()
 
     if df_filtro.empty:
         return px.scatter(title="Sem dados disponíveis")
@@ -34,32 +53,53 @@ def grafico_fourbox(
     df_filtro["eixo_y"] = sum(df_filtro[var] * peso for var, peso in zip(colunas_y, pesos_y)) / sum(pesos_y)
     df_filtro["destaque"] = df_filtro["unidade"] == unidade_sel if unidade_sel != "Todas" else False
 
-   # ✅ Tamanho proporcional à idade_unidade, se disponível
-    #if "idade_unidade" in df_filtro.columns:
-    #    df_filtro["idade_unidade"] = pd.to_numeric(df_filtro["idade_unidade"], errors="coerce")
-    #    idade = df_filtro["idade_unidade"].fillna(1)
+    # Tamanho proporcional à idade_unidade
+    if "idade_unidade" in df_filtro.columns:
+        df_filtro["idade_unidade"] = pd.to_numeric(df_filtro["idade_unidade"], errors="coerce")
+        tamanho_ativo = "idade_unidade"
+    else:
+        df_filtro[tamanho_ativo := "tamanho_padrao"] = 10
 
-        # Normaliza a idade entre 10 e 50 para melhorar contraste visual
-    #    idade_norm = (idade - idade.min()) / (idade.max() - idade.min())
-    #    tamanhos = 10 + idade_norm * 40  # mapeia para [10, 50]
-    #else:
-    #    tamanhos = np.repeat(15, len(df_filtro))
+    # Aplica formatação e cor para todos os indicadores
+    custom_cols = ["hover_x", "hover_y"]
+    for col in colunas_x + colunas_y:
+        nova_col = f"hover_{col}"
+        df_filtro[nova_col] = df_filtro[col].apply(colorir_nota)
+        custom_cols.append(nova_col)
 
-    # Gráfico de dispersão
+    df_filtro["hover_x"] = df_filtro["eixo_x"].apply(colorir_nota)
+    df_filtro["hover_y"] = df_filtro["eixo_y"].apply(colorir_nota)
+
+
+    # 2. Monta o gráfico com essas colunas
     fig = px.scatter(
         df_filtro,
         x="eixo_x",
         y="eixo_y",
         color="tipologia",
-        size='idade_unidade',
-        size_max=47,  # controla o tamanho máximo da bolha
+        size=tamanho_ativo,
+        size_max=47,
         hover_name="unidade",
-        hover_data={var: ':.2f' for var in colunas_x + colunas_y},
+        custom_data=custom_cols,
         labels={"eixo_x": "Eixo X", "eixo_y": "Eixo Y"},
         color_discrete_map=cores_tipologia,
-        title=f"Gráfico 4Box – {empresa_sel} ({competencia_sel})"
+        title=f"Gráfico 4Box – {empresa_sel} ({coluna_periodo}: {competencia_sel})"
     )
 
+    # 3. Cria template com os nomes das variáveis
+    indicadores_template = ""
+    for i, col in enumerate(colunas_x + colunas_y, start=2):
+        nome = nome_map.get(col, col)
+        indicadores_template += f"{nome}: %{{customdata[{i}]}}<br>"
+
+        # 4. Aplica o template final
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>" +
+                    "Nota Eixo X: %{customdata[0]}<br>" +
+                    "Nota Eixo Y: %{customdata[1]}<br>" +
+                    indicadores_template +
+                    "<extra></extra>"
+)
     # Quadrantes
     quadrantes = [
         (1, 2, 1, 2, "Alto X, Alto Y"),
@@ -80,7 +120,11 @@ def grafico_fourbox(
             xanchor="center", yanchor="middle"
         )
 
-    # Linhas centrais
+    # Bordas e linhas centrais
+    fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=2, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=2, x1=2, y0=0, y1=2, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=0, x1=2, y0=0, y1=0, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=0, x1=2, y0=2, y1=2, line=dict(color="black", width=2))
     fig.add_shape(type="line", x0=1, x1=1, y0=0, y1=2, line=dict(color="black", width=1))
     fig.add_shape(type="line", x0=0, x1=2, y0=1, y1=1, line=dict(color="black", width=1))
 
@@ -94,15 +138,6 @@ def grafico_fourbox(
         showlegend=False
     ))
 
-    # Anotação de referência
-    fig.add_annotation(
-        x=2, y=2,
-        text="Melhor Resultado",
-        showarrow=True,
-        arrowhead=2, ax=40, ay=-40,
-        font=dict(color="blue")
-    )
-
     # Layout final
     fig.update_layout(
         height=800,
@@ -111,7 +146,8 @@ def grafico_fourbox(
         xaxis=dict(range=[0, 2], tickvals=[], showticklabels=False),
         yaxis=dict(range=[0, 2], tickvals=[], showticklabels=False),
         legend_title="Tipologia",
-        showlegend=True
+        showlegend=True,
+        margin=dict(t=100, b=100),
     )
 
     # Anotação explicativa
