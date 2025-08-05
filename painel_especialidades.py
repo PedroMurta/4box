@@ -7,7 +7,9 @@ def exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, valor_periodo):
     df["ano"] = df["competencia"].str[:4]
     df["mes"] = df["competencia"].str[5:7].astype(int)
     df["semestre"] = df["mes"].apply(lambda m: "1" if m <= 6 else "2")
-    df["ano_semestre"] = df["semestre"] + "-" + df["ano"]
+    df["trimestre_mes"] = df["mes"].apply(lambda m: "1" if m <= 3 else "2" if m <= 6 else "3" if m <= 9 else "4")
+    df["trimestre"] = df["ano"].astype(str) + "-" + df["trimestre_mes"].astype(str)
+    df["ano_semestre"] = df["ano"] + "-" + df["semestre"]
 
     # Filtro principal baseado em período
     df_unidade = df[

@@ -12,6 +12,8 @@ from graficos import (
     grafico_custo_realizado_vs_meta, exibir_cards_orcamentarios
 )
 from painel_especialidades import exibir_metricas_com_donut
+from radar import grafico_radar_notas, exibir_cards_radar
+
 
 # 2. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(
@@ -28,7 +30,8 @@ with open("estilo.css") as f:
 # 3. LEITURA DOS DADOS
 @st.cache_data
 def carregar_dados():
-    df = pd.read_parquet("indicadores_estrategicos1.parquet")
+    #df = pd.read_parquet("indicadores_4box_temporais.parquet")
+    df = pd.read_parquet("indicadores_4box_padronizado1.parquet")
     df[df.select_dtypes(exclude="category").columns] = df.select_dtypes(exclude="category").fillna(0)
     return df
 
@@ -45,7 +48,9 @@ df["competencia"] = df["competencia"].astype(str)
 df["ano"] = df["competencia"].str[:4]
 df["mes"] = df["competencia"].str[5:7].astype(int)
 df["semestre"] = df["mes"].apply(lambda m: "1" if m <= 6 else "2")
-df["ano_semestre"] = df["semestre"] + "-" + df["ano"]
+df["trimestre_mes"] = df["mes"].apply(lambda m: "1" if m <= 3 else "2" if m <= 6 else "3" if m <= 9 else "4")   
+df["trimestre"] = df["ano"].astype(str) + "-" + df["trimestre_mes"].astype(str) 
+df["ano_semestre"] =  df["ano"] + "-" + df["semestre"] 
 df['idade_unidade'] = df['idade_unidade'].astype(int)
 
 for col in [
@@ -59,14 +64,14 @@ df.sort_values(by="competencia", inplace=True)
 # 4. BARRA DE NAVEGAÇÃO
 aba_selecionada = option_menu(
     menu_title=None,
-    options=["Painel 4Box", "Painel 9Box", "Atendimentos", "Custo", "Orçamento", "Tabela"],
-    icons=["bar-chart", "bar-chart","clock", "graph-up", "box", "table"],
+    options=["Painel 4Box", "Painel 9Box", "Atendimentos", "Custo", "Orçamento/Receita", "Tabela", "Radar"],
+    icons=["bar-chart", "bar-chart","clock", "graph-up", "box", "table", 'activity'],
     orientation="horizontal",
     default_index=0,
     styles={
         "container": {"padding": "0!important", "background-color": "#fafafa"},
         "icon": {"color": "#b7bc75", "font-size": "18px"},
-        "nav-link": {"font-size": "16px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
+        "nav-link": {"font-size": "12px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
         "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
     }
 )
@@ -74,37 +79,31 @@ aba_selecionada = option_menu(
 # 5. FILTROS
 with st.sidebar:
     df_filtro, empresa_sel, competencia_sel, agrupamento_opcao, conselho_sel, unidade_sel, tipologia_sel, \
-    variaveis_x, pesos_x, variaveis_y, pesos_y, filtro_col = sidebar_filtros(df)
+    variaveis_x, pesos_x, variaveis_y, pesos_y, filtro_col, df_empresa, nome_map = sidebar_filtros(df)
 
 # Corrigido: define a coluna correta para o período
 coluna_periodo = {
     "Mês": "competencia",
     "Semestre": "ano_semestre",
-    "Ano": "ano"
+    "Ano": "ano",
+    "Trimestre": "trimestre"
 }[agrupamento_opcao]
 
 # 6. ABA PRINCIPAL - 4Box
 if aba_selecionada == "Painel 4Box":
     fig = grafico_fourbox(
-        df_filtro,  # usa df_filtro (já filtrado por período e empresa)
-        empresa_sel,
-        competencia_sel,
-        unidade_sel,
-        coluna_periodo,
-        variaveis_x,
-        pesos_x,
-        variaveis_y,
-        pesos_y,
-        {
-            "nota_orcamento": "Orçamento",
-            "nota_caixa": "Caixa",
-            "nota_capacidade_produtiva": "Capacidade Produtiva",
-            "nota_receita": "Receita",
-            "nota_custo": "Custo",
-            "nota_producao": "Produção",
-            "nota_nps": 'NPS'
-        }
-    )
+    df_filtro,
+    empresa_sel,
+    competencia_sel,
+    unidade_sel,
+    coluna_periodo,
+    variaveis_x,
+    pesos_x,
+    variaveis_y,
+    pesos_y,
+    nome_map,
+    filtro_col
+)
 
     with st.expander("ℹ️ Ver interpretação estratégica dos quadrantes"):
         st.markdown("""
@@ -112,17 +111,12 @@ if aba_selecionada == "Painel 4Box":
         > **Eixo X**: esforço, recurso, insumo ou execução operacional.  
         > **Eixo Y**: retorno, entrega, desempenho ou resultado estratégico.
 
-        #### ⭐ Equilíbrio Sustentável (Alto X, Alto Y)
-        > Muitos recursos e alto desempenho.
+        #### ⭐ Tamanho das Bolhas
+        > Idade da unidade. Quanto maior a bolha, maior a data de inauguração, quanto menor a bolha, mais recente a unidade foi inaugurada.
 
-        #### 💡 Alta Eficiência Estratégica (Baixo X, Alto Y)
-        > Poucos recursos, alto retorno.
-
-        #### 🧩 Potencial de Desenvolvimento (Baixo X, Baixo Y)
-        > Baixo investimento e desempenho.
-
-        #### ⚠️ Esforço Desalinhado (Alto X, Baixo Y)
-        > Alto uso de recursos, baixo retorno.
+        #### 💡 Cor das Bolhas
+        > Indica a Tipologia de cada Unidade.
+        
         """)
 
     st.plotly_chart(fig, use_container_width=True)
@@ -165,21 +159,75 @@ elif aba_selecionada == "Painel 9Box":
 # 8. ABA ATENDIMENTOS
 elif aba_selecionada == "Atendimentos":
     st.subheader("🧾 Produção")
+    with st.expander("ℹ️ Interpretação dos gráficos"):
+        st.markdown("""
+        ###  Gráfico de linhas         
+        > Reflete a nota histórica de produção da UO por competência.
+
+        ####  Gráfico de Donuts
+        > Especialidade -> Executado -> meta. 
+        ...         
+        """)
     st.plotly_chart(grafico_nota_producao_series(df, empresa_sel, unidade_sel), use_container_width=True)
-    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_sel} ({competencia_sel})</b></h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='text-align: center;'><b><br>{unidade_sel} ({competencia_sel})</br></h4>", unsafe_allow_html=True)
     exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, competencia_sel)
 
+    
+
+    
 # 9. ABA CUSTO
 elif aba_selecionada == "Custo":
     st.subheader("💸 Custo Realizado vs Meta por Competência")
+    with st.expander("ℹ️ Descrição"):
+        st.markdown("""
+        ### 📊 Interpretação dos Quadrantes
+        > **Meta do Custo**: Valor definido para execução do custo de cada atendimento da UO no período selecionado. 
+        
+        > **Realizado**: Valor Real executado.
+        
+        > **Coluna Azul**: Valor da meta.
+        
+        > **Coluna Vermelha**: Quando o valor executado é superior a meta.
+        
+        > **Coluna Verde**: Quando o valor executado é melhor que a meta.
+        """)
     st.plotly_chart(grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_sel, competencia_sel), use_container_width=True)
+    
+    
+
+    
 
 # 10. ABA ORÇAMENTO
-elif aba_selecionada == "Orçamento":
+elif aba_selecionada == "Orçamento/Receita":
     st.subheader("📦 Indicadores Orçamentários")
-    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_sel} ({competencia_sel})</b></h4>", unsafe_allow_html=True)
+    with st.expander("ℹ️ Ver Descrição das Variáveis"):
+        st.markdown("""
+        ### 📊 Descrição:
+        > **Execução das Receitas**: Valor da Receita Realizada sobre a Receita Prevista da UO no período selecionado.  
+        > **Execução Orçamentária**: Despesa Liquidade sobre a Despesa Prevista da UO no período selecionado.
+        
+        """)
+
+    
+    st.markdown(f"<h4 style='text-align: center;'><b><br>{unidade_sel} ({competencia_sel})</br></h4>", unsafe_allow_html=True)
     exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo)
 
+    
 # 11. ABA TABELA
 elif aba_selecionada == "Tabela":
     pagina_indicadores(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo)
+    
+# 12. ABA RADAR
+elif aba_selecionada == "Radar":
+    st.subheader("📡 Radar de Notas por Indicador")
+    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_sel} ({competencia_sel})</b></h4><br>", unsafe_allow_html=True)
+
+    col_grafico, col_cards = st.columns([2, 1])
+
+    with col_grafico:
+        fig_radar = grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao)
+        st.plotly_chart(fig_radar, use_container_width=True)
+
+    st.markdown(f"<br><br>", unsafe_allow_html=True)
+    with col_cards:
+        exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao)

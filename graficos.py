@@ -137,39 +137,80 @@ def grafico_ninebox(
 # ========= DataFrame ==========
 # ==============================
 
-def pagina_indicadores(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
+def pagina_indicadores(df_empresa, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
     st.subheader("📊 Indicadores em Desenvolvimento")
     st.write("Visualize os indicadores detalhados por unidade, empresa e período.")
 
-    ano_sel = competencia_sel[:4]
-    colunas_nota = [col for col in df.columns if "nota" in col.lower()]
-    
+    df_empresa = df_empresa[df_empresa["empresa"] == empresa_sel].copy()
 
-    # === Notas agregadas no período selecionado ===
-    df_periodo = df[df[coluna_periodo] == competencia_sel].copy()
+    todas_colunas = df_empresa.columns.tolist()
+    colunas_nota_comp = [
+        col for col in todas_colunas
+        if col.startswith("nota_") and not col.endswith("_trimestral") and not col.endswith("_semestral") and not col.endswith("_anual")
+    ]
+    colunas_nota_trim = [col for col in todas_colunas if col.endswith("_trimestral")]
+    colunas_nota_sem = [col for col in todas_colunas if col.endswith("_semestral")]
+
+    colunas_agregadas = colunas_nota_comp + colunas_nota_trim + colunas_nota_sem
+
+    # === ✅ Notas agregadas no período selecionado (dinâmica)
+    df_periodo = df_empresa[df_empresa[coluna_periodo] == competencia_sel].copy()
+    df_periodo_agg = df_periodo.groupby(["empresa", "unidade", coluna_periodo], as_index=False)[colunas_agregadas].mean()
+
+    df_periodo_view = df_periodo_agg.query("empresa == @empresa_sel")
     if unidade_sel != "Todas":
-        df_periodo = df_periodo[df_periodo["unidade"] == unidade_sel]
-
-    df_periodo_agg = df_periodo.groupby(["empresa", "unidade", coluna_periodo], as_index=False)[colunas_nota].mean()
+        df_periodo_view = df_periodo_view.query("unidade == @unidade_sel")
 
     st.markdown("#### ✅ Notas agregadas no período selecionado")
-    st.dataframe(df_periodo_agg)
+    st.dataframe(df_periodo_view)
 
-    # === Notas por competência (mês), para histórico dentro do mesmo ano ou semestre ===
-    if coluna_periodo == "ano":
-        df_comp = df[(df["empresa"] == empresa_sel) & (df["ano"] == competencia_sel)].copy()
-    elif coluna_periodo == "ano_semestre":
-        df_comp = df[(df["empresa"] == empresa_sel) & (df["ano_semestre"] == competencia_sel)].copy()
-    else:  # "competencia"
-        df_comp = df[(df["empresa"] == empresa_sel) & (df["competencia"] == competencia_sel)].copy()
-
+    # === 📅 Notas por competência (estática)
+    df_comp = df_empresa.copy()
     if unidade_sel != "Todas":
         df_comp = df_comp[df_comp["unidade"] == unidade_sel]
 
-    colunas_comp = ["empresa", "unidade", "competencia", "ano"] + colunas_nota
-
     st.markdown("#### 📅 Notas por competência")
-    st.dataframe(df_comp[colunas_comp])
+    st.dataframe(df_comp[["empresa", "unidade", "competencia", "ano"] + colunas_nota_comp])
+
+    # === 🗓️ Notas por trimestre (estática)
+    df_trim = df_empresa.copy()
+    if unidade_sel != "Todas":
+        df_trim = df_trim[df_trim["unidade"] == unidade_sel]
+    df_trim[colunas_nota_trim] = df_trim[colunas_nota_trim].apply(pd.to_numeric, errors='coerce')
+
+    df_trim_agg = (
+        df_trim.groupby(["empresa", "unidade", "ano_trimestre"], as_index=False)[colunas_nota_trim]
+        .mean()
+        .rename(columns={"ano_trimestre": "trimestre"})
+    )
+
+    df_trim_view = df_trim_agg.query("empresa == @empresa_sel")
+    if unidade_sel != "Todas":
+        df_trim_view = df_trim_view.query("unidade == @unidade_sel")
+
+    st.markdown("#### 🗓️ Notas por trimestre")
+    st.dataframe(df_trim_view[["trimestre", "empresa", "unidade"] + colunas_nota_trim])
+
+    # === 📆 Notas por semestre (estática)
+    df_sem = df_empresa.copy()
+    if unidade_sel != "Todas":
+        df_sem = df_sem[df_sem["unidade"] == unidade_sel]
+    df_sem[colunas_nota_sem] = df_sem[colunas_nota_sem].apply(pd.to_numeric, errors='coerce')
+
+    df_sem_agg = (
+        df_sem.groupby(["empresa", "unidade", "ano_semestre"], as_index=False)[colunas_nota_sem]
+        .mean()
+        .rename(columns={"ano_semestre": "semestre"})
+    )
+
+    df_sem_view = df_sem_agg.query("empresa == @empresa_sel")
+    if unidade_sel != "Todas":
+        df_sem_view = df_sem_view.query("unidade == @unidade_sel")
+
+    st.markdown("#### 📆 Notas por semestre")
+    st.dataframe(df_sem_view[[ "semestre", "empresa", "unidade"] + colunas_nota_sem])
+
+
 
 
 #==============================
@@ -241,7 +282,7 @@ def grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_sel, competencia_se
         x=df_custo["competencia"],
         y=df_custo["soma_meta"],
         name="Meta",
-        marker_color="#38588f",
+        marker_color="#81a4cd",
         text=df_custo["soma_meta"].round(2).astype(str),
         textposition="inside"
     ))
@@ -303,9 +344,56 @@ def grafico_pizza_receita(receita_prevista, receita_realizada):
     )])
 
     fig.update_layout(
-        title_text="Execução da Receita Prevista",
+        #title_text="Execução da Receita Prevista",  # ou "Execução da Despesa Prevista"
         showlegend=True,
-        margin=dict(t=40, b=40, l=0, r=0),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(t=40, b=80, l=0, r=0),
+        height=420
+    )
+
+    return fig
+
+def grafico_pizza_despesa(despesa_prevista, despesa_liquidada):
+    if despesa_prevista == 0:
+        return go.Figure()
+
+    perc_exec = despesa_liquidada / despesa_prevista * 100
+
+    if perc_exec <= 100:
+        labels = ["Liquidado", "A liquidar"]
+        values = [perc_exec, 100 - perc_exec]
+        colors = ["#118ab2", "#3f4f6b"]
+    else:
+        labels = ["Liquidado (100%)", f"Excedente ({perc_exec - 100:.0f}%)"]
+        values = [100, perc_exec - 100]
+        colors = ["#118ab2", "#ef476f"]  # azul + vermelho p/ excesso
+
+    fig = go.Figure(data=[go.Pie(
+        labels=labels,
+        values=values,
+        hole=0.5,
+        marker=dict(colors=colors, line=dict(color='white', width=2)),
+        textinfo='label+percent',
+        insidetextorientation='radial'
+    )])
+
+    fig.update_layout(
+        #title_text="Execução da Despesa Prevista",  # ou "Execução da Despesa Prevista"
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(t=40, b=80, l=0, r=0),
         height=420
     )
 
@@ -358,23 +446,69 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
         </div>
         """
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(card_html("📥 Receita Prevista", f"R$ {receita_prevista:,.0f}"), unsafe_allow_html=True)
     with col2:
         st.markdown(card_html("📤 Receita Realizada", f"R$ {receita_realizada:,.0f}"), unsafe_allow_html=True)
     with col3:
+        st.markdown(card_html("📊 Proposta Orçamentária", f"R$ {proposta:,.0f}"), unsafe_allow_html=True)        
+    with col4:
         st.markdown(card_html("📈 Execução das Receitas", f"{perc_exec_receita:.2f}%"), unsafe_allow_html=True)
 
-    col4, col5, col6 = st.columns(3)
-    with col4:
-        st.markdown(card_html("💸 Despesa Prevista", f"R$ {despesa_prevista:,.0f}"), unsafe_allow_html=True)
+    col5, col6, col7 = st.columns(3)
     with col5:
-        st.markdown(card_html("💰 Despesa Liquidada", f"R$ {despesa_liquidada:,.0f}"), unsafe_allow_html=True)
+        st.markdown(card_html("💸 Despesa Prevista", f"R$ {despesa_prevista:,.0f}"), unsafe_allow_html=True)
     with col6:
-        st.markdown(card_html("📊 Proposta Orçamentária", f"R$ {proposta:,.0f}"), unsafe_allow_html=True)
+        st.markdown(card_html("💰 Despesa Liquidada", f"R$ {despesa_liquidada:,.0f}"), unsafe_allow_html=True)
+    with col7:
+        st.markdown(card_html("📊 Execução Orçamentária", f"{execucao_orcamentaria:,.2f}%"), unsafe_allow_html=True)
 
-    # Gráfico pizza
+   
+        # Gráficos de pizza lado a lado com estilo aprimorado
+        # Donuts com fundo personalizado estilo especialidades
     st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-    fig_pizza = grafico_pizza_receita(receita_prevista, receita_realizada)
-    st.plotly_chart(fig_pizza, use_container_width=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        percentual = receita_realizada / receita_prevista * 100 if receita_prevista else 0
+        cor_borda = "#000000" if percentual < 100 else "#2a9d8f"
+        cor_fundo = "#dcefee"  # azul claro suave
+
+        st.markdown(f"""
+        <div style='
+            background-color: {cor_fundo};
+            padding: 10px 15px;
+            border: 3px solid {cor_borda};
+            border-radius: 12px;
+            text-align: center;
+        '>
+            <h5 style='margin-bottom: 0;'>Execução Receita</h5>
+            
+        </div>
+        """, unsafe_allow_html=True)
+        st.plotly_chart(grafico_pizza_receita(receita_prevista, receita_realizada), use_container_width=True)
+
+    with col2:
+        percentual = despesa_liquidada / despesa_prevista * 100 if despesa_prevista else 0
+        cor_borda = "#010000" if percentual < 100 else "#2a9d8f"
+        cor_fundo = "#dcefee"
+
+        st.markdown(f"""
+        <div style='
+            background-color: {cor_fundo};
+            padding: 10px 15px;
+            border: 3px solid {cor_borda};
+            border-radius: 12px;
+            text-align: center;
+        '>
+            <h5 style='margin-bottom: 0;'>Execução Orçamentária</h5>
+           
+        </div>
+        """, unsafe_allow_html=True)
+        st.plotly_chart(grafico_pizza_despesa(despesa_prevista, despesa_liquidada), use_container_width=True)
+
+
+
+

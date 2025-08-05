@@ -2,6 +2,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import pandas as pd
+from filtros import aplicar_sufixos_colunas
 
 # Paletas de cores
 cores_tipologia = {
@@ -31,8 +32,12 @@ def colorir_nota(valor):
 
 def grafico_fourbox(
     df, empresa_sel, competencia_sel, unidade_sel, coluna_periodo,
-    colunas_x, pesos_x, colunas_y, pesos_y, nome_map
+    colunas_x_base, pesos_x, colunas_y_base, pesos_y, nome_map, filtro_col
 ):
+    # Aplica os sufixos corretos com base no período
+    colunas_x = aplicar_sufixos_colunas(colunas_x_base, filtro_col)
+    colunas_y = aplicar_sufixos_colunas(colunas_y_base, filtro_col)
+
     # Filtro principal
     if isinstance(competencia_sel, (list, tuple)):
         df_filtro = df[
@@ -49,63 +54,65 @@ def grafico_fourbox(
         return px.scatter(title="Sem dados disponíveis")
 
     # Cálculo dos eixos com pesos
-    df_filtro["eixo_x"] = sum(df_filtro[var] * peso for var, peso in zip(colunas_x, pesos_x)) / sum(pesos_x)
-    df_filtro["eixo_y"] = sum(df_filtro[var] * peso for var, peso in zip(colunas_y, pesos_y)) / sum(pesos_y)
+    df_filtro["eixo_x"] = sum(df_filtro[c] * p for c, p in zip(colunas_x, pesos_x)) / sum(pesos_x)
+    df_filtro["eixo_y"] = sum(df_filtro[c] * p for c, p in zip(colunas_y, pesos_y)) / sum(pesos_y)
     df_filtro["destaque"] = df_filtro["unidade"] == unidade_sel if unidade_sel != "Todas" else False
 
     # Tamanho proporcional à idade_unidade
-    if "idade_unidade" in df_filtro.columns:
-        df_filtro["idade_unidade"] = pd.to_numeric(df_filtro["idade_unidade"], errors="coerce")
-        tamanho_ativo = "idade_unidade"
-    else:
-        df_filtro[tamanho_ativo := "tamanho_padrao"] = 10
+    df_filtro["idade_unidade"] = pd.to_numeric(df_filtro.get("idade_unidade", 10), errors="coerce").fillna(10)
 
     # Aplica formatação e cor para todos os indicadores
-    custom_cols = ["hover_x", "hover_y"]
+    custom_cols = ["hover_x", "hover_y", 'idade_unidade']
     for col in colunas_x + colunas_y:
         nova_col = f"hover_{col}"
-        df_filtro[nova_col] = df_filtro[col].apply(colorir_nota)
+        df_filtro[nova_col] = df_filtro[col].fillna(0).apply(colorir_nota)
         custom_cols.append(nova_col)
 
-    df_filtro["hover_x"] = df_filtro["eixo_x"].apply(colorir_nota)
-    df_filtro["hover_y"] = df_filtro["eixo_y"].apply(colorir_nota)
+    df_filtro["hover_x"] = df_filtro["eixo_x"].fillna(0).apply(colorir_nota)
+    df_filtro["hover_y"] = df_filtro["eixo_y"].fillna(0).apply(colorir_nota)
 
-
-    # 2. Monta o gráfico com essas colunas
+    
+    # Cria gráfico
     fig = px.scatter(
         df_filtro,
         x="eixo_x",
         y="eixo_y",
         color="tipologia",
-        size=tamanho_ativo,
-        size_max=47,
+        size="idade_unidade",
+        size_max=30,
         hover_name="unidade",
         custom_data=custom_cols,
-        labels={"eixo_x": "Eixo X", "eixo_y": "Eixo Y"},
+        labels={"eixo_x": "Operação", "eixo_y": "Estratégia"},
         color_discrete_map=cores_tipologia,
+        category_orders={"tipologia": sorted(df_filtro["tipologia"].dropna().unique())},
         title=f"Gráfico 4Box – {empresa_sel} ({coluna_periodo}: {competencia_sel})"
     )
 
-    # 3. Cria template com os nomes das variáveis
+    # Template do hover
     indicadores_template = ""
-    for i, col in enumerate(colunas_x + colunas_y, start=2):
+    for i, col in enumerate(colunas_x + colunas_y, start=3):
         nome = nome_map.get(col, col)
         indicadores_template += f"{nome}: %{{customdata[{i}]}}<br>"
 
-        # 4. Aplica o template final
     fig.update_traces(
         hovertemplate="<b>%{hovertext}</b><br>" +
-                    "Nota Eixo X: %{customdata[0]}<br>" +
-                    "Nota Eixo Y: %{customdata[1]}<br>" +
-                    indicadores_template +
-                    "<extra></extra>"
-)
+                      "Nota Eixo X: %{customdata[0]}<br>" +
+                      "Nota Eixo Y: %{customdata[1]}<br>" +
+                      "Idade da Unidade: %{customdata[2]} ano(s)<br>" +
+                      indicadores_template +
+                      "<extra></extra>",
+        marker=dict(
+            line=dict(width=1, color='rgba(0,0,0,0.6)'),
+            opacity=0.8
+        )
+    )
+
     # Quadrantes
     quadrantes = [
-        (1, 2, 1, 2, "Alto X, Alto Y"),
-        (1, 2, 0, 1, "Alto X, Baixo Y"),
-        (0, 1, 1, 2, "Baixo X, Alto Y"),
-        (0, 1, 0, 1, "Baixo X, Baixo Y"),
+        (0.5, 1.0, 0.5, 1.0, "Alto X, Alto Y"),
+        (0.5, 1.0, 0.0, 0.5, "Alto X, Baixo Y"),
+        (0.0, 0.5, 0.5, 1.0, "Baixo X, Alto Y"),
+        (0.0, 0.5, 0.0, 0.5, "Baixo X, Baixo Y"),
     ]
     for x0, x1, y0, y1, nome in quadrantes:
         fig.add_shape(
@@ -121,30 +128,20 @@ def grafico_fourbox(
         )
 
     # Bordas e linhas centrais
-    fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=2, line=dict(color="black", width=2))
-    fig.add_shape(type="line", x0=2, x1=2, y0=0, y1=2, line=dict(color="black", width=2))
-    fig.add_shape(type="line", x0=0, x1=2, y0=0, y1=0, line=dict(color="black", width=2))
-    fig.add_shape(type="line", x0=0, x1=2, y0=2, y1=2, line=dict(color="black", width=2))
-    fig.add_shape(type="line", x0=1, x1=1, y0=0, y1=2, line=dict(color="black", width=1))
-    fig.add_shape(type="line", x0=0, x1=2, y0=1, y1=1, line=dict(color="black", width=1))
-
-    # Ponto ideal
-    fig.add_trace(go.Scatter(
-        x=[1], y=[1],
-        mode='markers+text',
-        marker=dict(size=27, color="blue", symbol="star"),
-        text=["IDEAL"],
-        textposition="top center",
-        showlegend=False
-    ))
+    fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=1, x1=1, y0=0, y1=1, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=0, x1=1, y0=0, y1=0, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=0, x1=1, y0=1, y1=1, line=dict(color="black", width=2))
+    fig.add_shape(type="line", x0=0.5, x1=0.5, y0=0, y1=1, line=dict(color="black", width=1))
+    fig.add_shape(type="line", x0=0, x1=1, y0=0.5, y1=0.5, line=dict(color="black", width=1))
 
     # Layout final
     fig.update_layout(
         height=800,
         paper_bgcolor='ghostwhite',
         plot_bgcolor='ghostwhite',
-        xaxis=dict(range=[0, 2], tickvals=[], showticklabels=False),
-        yaxis=dict(range=[0, 2], tickvals=[], showticklabels=False),
+        xaxis=dict(range=[0, 1], tickvals=[], showticklabels=False),
+        yaxis=dict(range=[0, 1], tickvals=[], showticklabels=False),
         legend_title="Tipologia",
         showlegend=True,
         margin=dict(t=100, b=100),
