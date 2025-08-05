@@ -79,7 +79,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
     fig.update_layout(
         polar=dict(
             gridshape="linear",
-            radialaxis=dict(visible=True, range=[0, 1.5], tickfont=dict(size=12)),
+            radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=12)),
             angularaxis=dict(tickfont=dict(size=13), rotation=90, direction='clockwise')
         ),
         height=700,

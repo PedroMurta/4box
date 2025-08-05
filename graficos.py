@@ -318,7 +318,7 @@ def card_personalizado(titulo, valor, cor_fundo="#f5f5f5", cor_borda="#CCCCCC"):
         """,
         unsafe_allow_html=True
     )
-
+'''
 def grafico_pizza_receita(receita_prevista, receita_realizada):
     if receita_prevista == 0:
         return go.Figure()
@@ -398,20 +398,73 @@ def grafico_pizza_despesa(despesa_prevista, despesa_liquidada):
     )
 
     return fig
+'''
+def grafico_despesa_realizada_vs_prevista(despesa_prevista, despesa_realizada):
+    cor_realizada = "#b04c52" if despesa_realizada > despesa_prevista else "#588157"
 
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=["Despesa"],
+        y=[despesa_realizada],
+        name="Realizado",
+        marker_color=cor_realizada,
+        text=f"R$ {despesa_realizada:,.0f}",
+        textposition="auto"
+    ))
+    fig.add_trace(go.Bar(
+        x=["Despesa"],
+        y=[despesa_prevista],
+        name="Previsto",
+        marker_color="#81a4cd",
+        text=f"R$ {despesa_prevista:,.0f}",
+        textposition="auto"
+    ))
+    fig.update_layout(
+        #title="Execução da Despesa",
+        yaxis_title="Valor (R$)",
+        barmode="group",
+        height=400,
+        showlegend=True
+    )
+    return fig
+
+def grafico_receita_realizada_vs_prevista(receita_prevista, receita_realizada):
+    cor_realizada = "#b04c52" if receita_realizada > receita_prevista else "#588157"
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=["Receita"],
+        y=[receita_realizada],
+        name="Realizado",
+        marker_color=cor_realizada,
+        text=f"R$ {receita_realizada:,.0f}",
+        textposition="auto"
+    ))
+    fig.add_trace(go.Bar(
+        x=["Receita"],
+        y=[receita_prevista],
+        name="Previsto",
+        marker_color="#81a4cd",
+        text=f"R$ {receita_prevista:,.0f}",
+        textposition="auto"
+    ))
+    fig.update_layout(
+        #title="Execução da Receita",
+        yaxis_title="Valor (R$)",
+        barmode="group",
+        height=400,
+        showlegend=True
+    )
+    return fig
 # ==============================
 # ========= Orçamento ==========
 # ==============================
 def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
     df_filtrado = df[df["empresa"] == empresa_sel].copy()
-
     if unidade_sel != "Todas":
         df_filtrado = df_filtrado[df_filtrado["unidade"] == unidade_sel]
-
-    # Filtro por período (ano, semestre ou competência)
     df_filtrado = df_filtrado[df_filtrado[coluna_periodo] == competencia_sel]
 
-    # Conversão segura das colunas
     colunas_valores = [
         "receita_prevista", "receita_realizada",
         "despesa_prevista", "despesa_liquidada",
@@ -420,23 +473,18 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
 
     for col in colunas_valores:
         df_filtrado[col] = pd.to_numeric(
-            df_filtrado[col].astype(str)
-            .str.replace(r"[^\d,.-]", "", regex=True)
-            .str.replace(",", "."),
+            df_filtrado[col].astype(str).str.replace(r"[^\d,.-]", "", regex=True).str.replace(",", "."),
             errors="coerce"
         ).fillna(0)
 
-    # Agregações
     receita_prevista = df_filtrado["receita_prevista"].sum()
     receita_realizada = df_filtrado["receita_realizada"].sum()
     despesa_prevista = df_filtrado["despesa_prevista"].sum()
     despesa_liquidada = df_filtrado["despesa_liquidada"].sum()
     proposta = df_filtrado["proposta"].sum()
     execucao_orcamentaria = df_filtrado["execucao_orcamentaria"].mean()
-
     perc_exec_receita = (receita_realizada / receita_prevista * 100) if receita_prevista > 0 else 0
 
-    # Estilo dos cards
     def card_html(titulo, valor, cor="#3f4f6b"):
         return f"""
         <div style="border: 2px solid #ccc; border-radius: 12px; padding: 10px; margin: 5px;
@@ -452,7 +500,7 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
     with col2:
         st.markdown(card_html("📤 Receita Realizada", f"R$ {receita_realizada:,.0f}"), unsafe_allow_html=True)
     with col3:
-        st.markdown(card_html("📊 Proposta Orçamentária", f"R$ {proposta:,.0f}"), unsafe_allow_html=True)        
+        st.markdown(card_html("📊 Proposta Orçamentária", f"R$ {proposta:,.0f}"), unsafe_allow_html=True)
     with col4:
         st.markdown(card_html("📈 Execução das Receitas", f"{perc_exec_receita:.2f}%"), unsafe_allow_html=True)
 
@@ -462,53 +510,20 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
     with col6:
         st.markdown(card_html("💰 Despesa Liquidada", f"R$ {despesa_liquidada:,.0f}"), unsafe_allow_html=True)
     with col7:
-        st.markdown(card_html("📊 Execução Orçamentária", f"{execucao_orcamentaria:,.2f}%"), unsafe_allow_html=True)
+        st.markdown(card_html("📊 Execução Orçamentária", f"{execucao_orcamentaria:.2f}%"), unsafe_allow_html=True)
 
-   
-        # Gráficos de pizza lado a lado com estilo aprimorado
-        # Donuts com fundo personalizado estilo especialidades
     st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-
     col1, col2 = st.columns(2)
 
     with col1:
-        percentual = receita_realizada / receita_prevista * 100 if receita_prevista else 0
-        cor_borda = "#000000" if percentual < 100 else "#2a9d8f"
-        cor_fundo = "#dcefee"  # azul claro suave
-
-        st.markdown(f"""
-        <div style='
-            background-color: {cor_fundo};
-            padding: 10px 15px;
-            border: 3px solid {cor_borda};
-            border-radius: 12px;
-            text-align: center;
-        '>
-            <h5 style='margin-bottom: 0;'>Execução Receita</h5>
-            
-        </div>
-        """, unsafe_allow_html=True)
-        st.plotly_chart(grafico_pizza_receita(receita_prevista, receita_realizada), use_container_width=True)
+        cor = "#2ecc71" if perc_exec_receita <= 100 else "#e74c3c"
+        st.markdown("### 📊 Execução da Receita", unsafe_allow_html=True)
+        st.plotly_chart(grafico_receita_realizada_vs_prevista(receita_prevista, receita_realizada), use_container_width=True)
 
     with col2:
-        percentual = despesa_liquidada / despesa_prevista * 100 if despesa_prevista else 0
-        cor_borda = "#010000" if percentual < 100 else "#2a9d8f"
-        cor_fundo = "#dcefee"
-
-        st.markdown(f"""
-        <div style='
-            background-color: {cor_fundo};
-            padding: 10px 15px;
-            border: 3px solid {cor_borda};
-            border-radius: 12px;
-            text-align: center;
-        '>
-            <h5 style='margin-bottom: 0;'>Execução Orçamentária</h5>
-           
-        </div>
-        """, unsafe_allow_html=True)
-        st.plotly_chart(grafico_pizza_despesa(despesa_prevista, despesa_liquidada), use_container_width=True)
-
-
+        perc_exec_despesa = (despesa_liquidada / despesa_prevista * 100) if despesa_prevista > 0 else 0
+        cor = "#2ecc71" if perc_exec_despesa <= 100 else "#e74c3c"
+        st.markdown("### 📊 Execução da Despesa", unsafe_allow_html=True)
+        st.plotly_chart(grafico_despesa_realizada_vs_prevista(despesa_prevista, despesa_liquidada), use_container_width=True)
 
 
