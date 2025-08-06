@@ -271,7 +271,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
                     font-weight: bold;
                 ">
                     <div style="font-size: 16px; margin-bottom: 8px;">
-                        {nome_display} - Calculado
+                        {nome_display} - Executado
                     </div>
                     <div style="font-size: 24px; font-weight: bold;">
                         {valor_agregado:.2f}%
