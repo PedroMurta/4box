@@ -271,7 +271,14 @@ def grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_sel, competencia_se
         barmode="group",
         height=550,
         xaxis_tickangle=-45,
-        **LAYOUT_CONFIG
+        legend=dict(        
+        x=.95,         # mais à esquerda
+        y=1.03,
+        xanchor='left', # ancoragem à direita
+        bgcolor='rgba(0,0,0,0)',  # fundo transparente (opcional)
+        ),
+        showlegend=True,
+            **LAYOUT_CONFIG
     )
     
     return fig
@@ -299,9 +306,16 @@ def criar_grafico_barras_comparativo(valores, labels, titulo_y, cores=None):
         yaxis_title="Valor (R$)",
         barmode="group",
         height=400,
+        legend=dict(        
+        x=.91,         # mais à esquerda
+        y=1.2,
+        xanchor='left', # ancoragem à direita
+        bgcolor='rgba(0,0,0,0)',  # fundo transparente (opcional)
+        ),
         showlegend=True,
-        **LAYOUT_CONFIG
+            **LAYOUT_CONFIG
     )
+    
     
     return fig
 
@@ -350,6 +364,11 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
         if metricas["receita_prevista"] > 0 else 0
     )
     
+    perc_exec_orcamento = (
+        metricas["despesa_liquidada"] / metricas["despesa_prevista"] * 100 
+        if metricas["despesa_prevista"] > 0 else 0
+    )
+    
     # Exibição dos cards
     col1, col2, col3, col4 = st.columns(4)
     cards_linha1 = [
@@ -367,7 +386,7 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
     cards_linha2 = [
         ("💸 Despesa Prevista", f"R$ {metricas['despesa_prevista']:,.0f}"),
         ("💰 Despesa Liquidada", f"R$ {metricas['despesa_liquidada']:,.0f}"),
-        ("📊 Execução Orçamentária", f"{metricas['execucao_orcamentaria']:.2f}%")
+        ("📊 Execução Orçamentária", f"{perc_exec_orcamento:.2f}%")
     ]
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     for col, (titulo, valor) in zip([col5, col6, col7], cards_linha2):
@@ -460,7 +479,14 @@ def grafico_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, coluna_pe
             tickvals=list(df_fluxo["competencia"]),
             ticktext=list(df_fluxo["competencia"].astype(str))
         ),
-        **LAYOUT_CONFIG
+        legend=dict(        
+        x=.97,         # mais à esquerda
+        y=1.03,
+        xanchor='left', # ancoragem à direita
+        bgcolor='rgba(0,0,0,0)',  # fundo transparente (opcional)
+        ),
+        showlegend=True,
+            **LAYOUT_CONFIG
     )
     
     return fig

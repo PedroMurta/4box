@@ -4,9 +4,22 @@ import pandas as pd
 
 # ===== CONSTANTES =====
 ESPECIALIDADES = [
-    "odonto", "fisio", "psico", "nutri", 
-    "pale_sest", "elc", "curso_prese", "curso_ead", "pale_senat"
+    "Odontologia", "Fisioterapia", "Psicologia", "Nutrição", 
+    "Palestra SEST", "ELC", "Curso Presencial", "Curso EAD", "Palestra SENAT"
 ]
+
+# Mapeamento para compatibilidade com colunas do DataFrame
+MAPA_COLUNAS = {
+    "Odontologia": "odonto",
+    "Fisioterapia": "fisio", 
+    "Psicologia": "psico",
+    "Nutrição": "nutri",
+    "Palestra SEST": "pale_sest",
+    "ELC": "elc",
+    "Curso Presencial": "curso_prese",
+    "Curso EAD": "curso_ead",
+    "Palestra SENAT": "pale_senat"
+}
 
 CORES_PERFORMANCE = {
     "bom": "#588157",
@@ -37,17 +50,19 @@ def processar_dados_temporais_especialidades(df):
     df["ano_semestre"] = df["ano"] + "-" + df["semestre"].astype(str)
     return df
 
-def calcular_metricas_especialidade(linha, especialidade):
+def calcular_metricas_especialidade(linha, especialidade_nome):
     """Calcula métricas para uma especialidade específica"""
-    valor_real = int(linha.get(especialidade, 0))
-    valor_meta = int(linha.get(f"meta_{especialidade}", 0))
+    especialidade_col = MAPA_COLUNAS[especialidade_nome]
+    
+    valor_real = int(linha.get(especialidade_col, 0))
+    valor_meta = int(linha.get(f"meta_{especialidade_col}", 0))
     delta = valor_real - valor_meta
     
     simbolo = "↑" if delta >= 0 else "↓"
     cor = CORES_PERFORMANCE["bom"] if delta >= 0 else CORES_PERFORMANCE["ruim"]
     texto_delta = f"<span style='color:{cor}; font-size:16px;'>{simbolo} {abs(delta):,}".replace(",", ".") + "</span>"
     
-    valor_pct = linha.get(f"pct_{especialidade}")
+    valor_pct = linha.get(f"pct_{especialidade_col}")
     try:
         valor_pct = float(valor_pct) if valor_pct is not None else None
     except (ValueError, TypeError):
@@ -100,25 +115,26 @@ def agregar_dados_periodo(df_unidade):
         return df_unidade.iloc[0] if len(df_unidade) == 1 else {}
     
     agregados = {}
-    for esp in ESPECIALIDADES:
-        valor_total = df_unidade[esp].sum()
-        meta_total = df_unidade[f"meta_{esp}"].sum()
+    for esp_nome in ESPECIALIDADES:
+        esp_col = MAPA_COLUNAS[esp_nome]
+        valor_total = df_unidade[esp_col].sum()
+        meta_total = df_unidade[f"meta_{esp_col}"].sum()
         
-        agregados[esp] = valor_total
-        agregados[f"meta_{esp}"] = meta_total
-        agregados[f"pct_{esp}"] = (
+        agregados[esp_col] = valor_total
+        agregados[f"meta_{esp_col}"] = meta_total
+        agregados[f"pct_{esp_col}"] = (
             100 * valor_total / meta_total if meta_total > 0 else 0
         )
     
     return agregados
 
-def criar_card_especialidade(especialidade, metricas, indice):
+def criar_card_especialidade(especialidade_nome, metricas, indice):
     """Cria card HTML para uma especialidade"""
     return f"""
     <div style="border: 3px solid {metricas['cor_borda']}; border-radius: 12px; padding: 10px; 
                 text-align: center; background-color: rgb(63, 79, 107); color: #C9D6DF;">
-        <div style="font-weight: bold; font-size: 16px;">{especialidade.upper()}</div>
-        <div style="font-size: 22px; margin: 5px 0;">
+        <div style="font-weight: bold; font-size: 22px;">{especialidade_nome.upper()}</div>
+        <div style="font-size: 19px; margin: 5px 0;">
             <i>Realizado: <b>{metricas['valor_real']:,}</b></i> <br> 
             Meta: {metricas['valor_meta']:,}
         </div>
@@ -155,9 +171,9 @@ def exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, valor_periodo):
     colunas = st.columns(3)
     
     # Processamento otimizado de cada especialidade
-    for i, especialidade in enumerate(ESPECIALIDADES):
+    for i, especialidade_nome in enumerate(ESPECIALIDADES):
         # Cálculo das métricas
-        metricas = calcular_metricas_especialidade(linha, especialidade)
+        metricas = calcular_metricas_especialidade(linha, especialidade_nome)
         
         # Criação do gráfico donut
         fig = criar_donut_chart(metricas['valor_pct'])
@@ -165,7 +181,7 @@ def exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, valor_periodo):
         # Renderização do card e gráfico
         with colunas[i % 3]:
             # Card com informações
-            card_html = criar_card_especialidade(especialidade, metricas, i)
+            card_html = criar_card_especialidade(especialidade_nome, metricas, i)
             st.markdown(card_html, unsafe_allow_html=True)
             
             # Gráfico donut se disponível
@@ -174,7 +190,7 @@ def exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, valor_periodo):
                     fig, 
                     use_container_width=True, 
                     config={"displayModeBar": False}, 
-                    key=f"donut_{especialidade}_{valor_periodo}"
+                    key=f"donut_{MAPA_COLUNAS[especialidade_nome]}_{valor_periodo}"
                 )
             
             # Fechamento da div do card
@@ -204,8 +220,9 @@ def calcular_resumo_performance(df, unidade_sel, coluna_periodo, valor_periodo):
     
     performances = []
     
-    for esp in ESPECIALIDADES:
-        valor_pct = linha.get(f"pct_{esp}", 0)
+    for esp_nome in ESPECIALIDADES:
+        esp_col = MAPA_COLUNAS[esp_nome]
+        valor_pct = linha.get(f"pct_{esp_col}", 0)
         try:
             valor_pct = float(valor_pct) if valor_pct is not None else 0
         except (ValueError, TypeError):
@@ -220,11 +237,11 @@ def calcular_resumo_performance(df, unidade_sel, coluna_periodo, valor_periodo):
         
         # Melhor performance
         if valor_pct > resumo['melhor_performance'][1]:
-            resumo['melhor_performance'] = (esp, valor_pct)
+            resumo['melhor_performance'] = (esp_nome, valor_pct)
         
         # Pior performance
         if valor_pct < resumo['pior_performance'][1]:
-            resumo['pior_performance'] = (esp, valor_pct)
+            resumo['pior_performance'] = (esp_nome, valor_pct)
     
     resumo['performance_media'] = sum(performances) / len(performances) if performances else 0
     
@@ -288,8 +305,9 @@ def comparar_performance_temporal(df, unidade_sel, coluna_periodo):
             linha = agregar_dados_periodo(df_periodo)
             
             performance_total = []
-            for esp in ESPECIALIDADES:
-                valor_pct = linha.get(f"pct_{esp}", 0)
+            for esp_nome in ESPECIALIDADES:
+                esp_col = MAPA_COLUNAS[esp_nome]
+                valor_pct = linha.get(f"pct_{esp_col}", 0)
                 try:
                     valor_pct = float(valor_pct) if valor_pct is not None else 0
                 except (ValueError, TypeError):
@@ -319,8 +337,7 @@ def comparar_performance_temporal(df, unidade_sel, coluna_periodo):
         fig.update_layout(
             xaxis_title="Período",
             yaxis_title="Performance Média (%)",
-            height=500,
-            
+            height=400
         )
         
         st.plotly_chart(fig, use_container_width=True)

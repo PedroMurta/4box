@@ -1,115 +1,598 @@
-/* ------------------------
-   FUNDO E ESTILO GERAL
------------------------- */
+/* ========================================
+   🌟 GLASSMORPHISM DASHBOARD TEMPLATE
+   Design: Moderno, Vibrante e Inovador
+======================================== */
+
+:root {
+  /* Cores vibrantes e modernas */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  
+  /* Cores glassmorphism */
+  --glass-white: rgba(255, 255, 255, 0.25);
+  --glass-white-strong: rgba(255, 255, 255, 0.4);
+  --glass-dark: rgba(0, 0, 0, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  
+  /* Sombras avançadas */
+  --glow-primary: 0 8px 32px rgba(102, 126, 234, 0.37);
+  --glow-secondary: 0 8px 32px rgba(240, 147, 251, 0.37);
+  --glow-accent: 0 8px 32px rgba(79, 172, 254, 0.37);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-floating: 0 15px 35px rgba(31, 38, 135, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+  
+  /* Bordas e raios */
+  --border-glass: 1px solid rgba(255, 255, 255, 0.18);
+  --radius-glass: 16px;
+  --radius-card: 20px;
+  --radius-button: 12px;
+  
+  /* Animações */
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Blur effects */
+  --blur-glass: blur(16px);
+  --blur-strong: blur(24px);
+}
+
+/* ========================================
+   🎨 BACKGROUND ANIMADO E VIBRANTE
+======================================== */
 body {
-    background-color: #3f4f6b;
-    font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #43e97b 75%, #4facfe 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-footer { visibility: hidden; }
-h1, h2, h3, h4, h5 { color: #3f4f6b; }
+/* Partículas flutuantes de fundo */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+  animation: floatingParticles 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
 
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes floatingParticles {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(120deg); }
+  66% { transform: translateY(10px) rotate(240deg); }
+}
+
+/* Remove elementos padrão */
+footer, #MainMenu, header { visibility: hidden; }
+
+/* ========================================
+   🔮 SIDEBAR GLASSMORPHISM
+======================================== */
 section[data-testid="stSidebar"] {
-    background-color: #cedeeb;
+  background: linear-gradient(145deg, rgba(3, 59, 109, 0.25) 0%, rgba(11, 63, 66, 0.3) 100%);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: none;
+  border-right: 1px solid rgba(12, 60, 103, 0.3);
+  box-shadow: var(--shadow-glass);
+  position: relative;
+  z-index: 10;
+  position: relative;
+  z-index: 10
 }
 
-/* Sidebar: texto preto */
+/* Efeito de brilho na sidebar */
+section[data-testid="stSidebar"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--primary-gradient);
+  opacity: 0.8;
+}
+
+/* Título da sidebar com efeito neon */
+section[data-testid="stSidebar"] .css-1d391kg h3,
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  position: relative;
+  text-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+}
+
+/* Texto da sidebar */
 section[data-testid="stSidebar"] * {
-    color: black !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500 !important;
 }
 
-/* Sidebar: inputs */
-section[data-testid="stSidebar"] input,
-section[data-testid="stSidebar"] select,
-section[data-testid="stSidebar"] textarea,
-section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] * {
-    color: black !important;
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p {
+  color: rgba(15, 0, 0, 0.95) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* ------------------------
-   BOTÕES DE POPOVER (📅, 🎛️ etc.)
------------------------- */
+/* ========================================
+   🎮 BOTÕES FUTURISTAS
+======================================== */
 section[data-testid="stSidebar"] .stButton > button {
-    width: 100% !important;
-    color: black !important;
-    background-color: #3b4a5a !important;
-    padding: 0.6rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  background: var(--glass-white-strong) !important;
+  backdrop-filter: var(--blur-glass) !important;
+  -webkit-backdrop-filter: var(--blur-glass) !important;
+  border: var(--border-glass) !important;
+  border-radius: var(--radius-button) !important;
+  padding: 1rem 1.5rem !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: var(--transition-smooth) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  margin: 0.5rem 0 !important;
+  width: 100% !important;
 }
 
-section[data-testid="stSidebar"] .stButton > button:disabled {
-    background-color: #5c6e7d !important;
-    color: black !important;
+/* Efeito hover nos botões */
+section[data-testid="stSidebar"] .stButton > button:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: var(--glow-primary) !important;
+  background: var(--glass-white-strong) !important;
 }
 
-/* Diferencia por emoji */
-section[data-testid="stSidebar"] .stButton > button:has(span:contains("🧊")) {
-    background-color: #305f7a !important;
+/* Efeito de ondas nos botões */
+section[data-testid="stSidebar"] .stButton > button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
-section[data-testid="stSidebar"] .stButton > button:has(span:contains("🔧")) {
-    background-color: #51694d !important;
+section[data-testid="stSidebar"] .stButton > button:active::before {
+  width: 300px;
+  height: 300px;
 }
 
+/* Botões específicos com gradientes */
 section[data-testid="stSidebar"] .stButton > button:has(span:contains("📅")) {
-    background-color: #5a5b7a !important;
+  background: var(--glass-white-strong) !important;
+  box-shadow: var(--glow-accent);
 }
 
 section[data-testid="stSidebar"] .stButton > button:has(span:contains("🎛️")) {
-    background-color: #678b9a !important;
+  background: var(--glass-white-strong) !important;
+  box-shadow: var(--glow-secondary);
 }
 
-/* ------------------------
-   POPOVER INTERNO (modal que abre)
------------------------- */
+section[data-testid="stSidebar"] .stButton > button:has(span:contains("🔧")) {
+  background: var(--glass-white-strong) !important;
+  box-shadow: 0 8px 32px rgba(67, 233, 123, 0.37);
+}
+
+/* ========================================
+   🔧 INPUTS GLASSMORPHISM
+======================================== */
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] select,
+section[data-testid="stSidebar"] textarea {
+  background: var(--glass-white) !important;
+  backdrop-filter: var(--blur-glass) !important;
+  -webkit-backdrop-filter: var(--blur-glass) !important;
+  border: var(--border-glass) !important;
+  border-radius: var(--radius-button) !important;
+  padding: 0.75rem 1rem !important;
+  color: white !important;
+  font-weight: 500 !important;
+  transition: var(--transition-smooth) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+section[data-testid="stSidebar"] input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+section[data-testid="stSidebar"] input:focus,
+section[data-testid="stSidebar"] select:focus {
+  background: var(--glass-white-strong) !important;
+  border: 1px solid rgba(102, 126, 234, 0.3) !important;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3) !important;
+  outline: none !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ========================================
+   💫 POPOVERS E MODAIS FUTURISTAS
+======================================== */
 div[role="dialog"] {
-    background-color: #f1f1f1 !important;
-    color: black !important;
-    border-radius: 8px !important;
-    padding: 1rem;
+  background: var(--glass-white-strong) !important;
+  backdrop-filter: var(--blur-strong) !important;
+  -webkit-backdrop-filter: var(--blur-strong) !important;
+  border: var(--border-glass) !important;
+  border-radius: var(--radius-card) !important;
+  padding: 2rem !important;
+  box-shadow: var(--shadow-floating) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+div[role="dialog"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-gradient);
 }
 
 div[role="dialog"] * {
-    color: black !important;
+  color: rgba(255, 255, 255, 0.95) !important;
 }
 
-div[role="dialog"] input,
-div[role="dialog"] select,
-div[role="dialog"] .stSelectbox div[data-baseweb="select"] * {
-    color: black !important;
+div[role="dialog"] h1,
+div[role="dialog"] h2,
+div[role="dialog"] h3 {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
 }
 
-/* ------------------------
-   EXPANDER (🔧 Ajustar Pesos dos Eixos)
------------------------- */
-details[data-testid="stExpander"] summary {
-    background-color: #51694d !important;
-    border: 1px solid #51694d;
-    border-radius: 8px;
-    padding: 0.6rem 1rem;
-    font-weight: 600;
-    color: black !important;
-    font-size: 0.9rem;
+/* ========================================
+   📊 GRÁFICOS FLUTUANTES
+======================================== */
+div[data-testid="stPlotlyChart"] {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: var(--blur-glass) !important;
+  -webkit-backdrop-filter: var(--blur-glass) !important;
+  border: none !important;
+  border-radius: var(--radius-card) !important;
+  padding: 1rem !important;
+  margin: 1.5rem 0 !important;
+  box-shadow: var(--shadow-floating) !important;
+  transition: var(--transition-smooth) !important;
+  position: relative !important;
+  overflow: visible !important;
 }
 
+div[data-testid="stPlotlyChart"]:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: var(--shadow-floating), 0 20px 40px rgba(31, 38, 135, 0.15) !important;
+}
+
+/* Efeito de brilho nos gráficos */
+div[data-testid="stPlotlyChart"]::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-card);
+  z-index: -1;
+  opacity: 0;
+  transition: var(--transition-smooth);
+}
+
+div[data-testid="stPlotlyChart"]:hover::before {
+  opacity: 0.3;
+}
+
+.js-plotly-plot {
+  border-radius: var(--radius-card) !important;
+  overflow: hidden !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Container interno do Plotly */
+.js-plotly-plot .plotly {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* SVG do gráfico */
+.js-plotly-plot .main-svg {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* ========================================
+   🎯 MÉTRICAS HOLOGRÁFICAS
+======================================== */
+div[data-testid="metric-container"] {
+  background: var(--glass-white-strong) !important;
+  backdrop-filter: var(--blur-glass) !important;
+  -webkit-backdrop-filter: var(--blur-glass) !important;
+  border: var(--border-glass) !important;
+  border-radius: var(--radius-card) !important;
+  padding: 2rem !important;
+  margin: 1rem 0 !important;
+  transition: var(--transition-bounce) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+div[data-testid="metric-container"]:hover {
+  transform: translateY(-10px) scale(1.05) !important;
+  box-shadow: var(--glow-accent) !important;
+}
+
+/* Efeito de partículas nas métricas */
+div[data-testid="metric-container"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+div[data-testid="metric-container"]:hover::after {
+  left: 100%;
+}
+
+/* Labels das métricas */
+div[data-testid="metric-container"] > div:first-child {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-size: 0.85rem !important;
+}
+
+/* Valores das métricas */
+div[data-testid="metric-container"] > div:nth-child(2) {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800 !important;
+  font-size: 2.5rem !important;
+  text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+/* ========================================
+   🎪 EXPANDERS FUTURISTAS
+======================================== */
 details[data-testid="stExpander"] {
-    background-color: #f1f1f1 !important;  /* <- cinza claro igual ao popover */
-    border-radius: 8px;
-    margin-top: 0.75rem;
-    padding: 1rem;
+  background: var(--glass-white) !important;
+  backdrop-filter: var(--blur-glass) !important;
+  -webkit-backdrop-filter: var(--blur-glass) !important;
+  border: var(--border-glass) !important;
+  border-radius: var(--radius-card) !important;
+  margin: 1.5rem 0 !important;
+  overflow: hidden !important;
+  transition: var(--transition-smooth) !important;
+  box-shadow: var(--shadow-glass) !important;
 }
 
-details[data-testid="stExpander"] * {
-    color: black !important;
+details[data-testid="stExpander"]:hover {
+  box-shadow: var(--shadow-floating) !important;
+  transform: translateY(-4px) !important;
 }
 
-details[data-testid="stExpander"] input,
-details[data-testid="stExpander"] select,
-details[data-testid="stExpander"] .stSelectbox div[data-baseweb="select"] * {
-    color: black !important;
+details[data-testid="stExpander"] summary {
+  background: var(--primary-gradient) !important;
+  padding: 1.5rem 2rem !important;
+  color: white !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  cursor: pointer !important;
+  transition: var(--transition-smooth) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+details[data-testid="stExpander"] summary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s;
+}
+
+details[data-testid="stExpander"]:hover summary::before {
+  left: 100%;
+}
+
+details[data-testid="stExpander"] > div {
+  padding: 2rem !important;
+  background: var(--glass-white) !important;
+}
+
+/* ========================================
+   🎊 NAVEGAÇÃO HOLOGRÁFICA
+======================================== */
+.stTabs [data-baseweb="tab-list"] {
+  background: var(--glass-white) !important;
+  backdrop-filter: var(--blur-glass) !important;
+  -webkit-backdrop-filter: var(--blur-glass) !important;
+  border: var(--border-glass) !important;
+  border-radius: var(--radius-button) !important;
+  padding: 0.5rem !important;
+  margin-bottom: 2rem !important;
+  box-shadow: var(--shadow-glass) !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-radius: var(--radius-button) !important;
+  padding: 1rem 1.5rem !important;
+  font-weight: 600 !important;
+  transition: var(--transition-smooth) !important;
+  border: none !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+  background: var(--glass-white-strong) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+  background: var(--primary-gradient) !important;
+  color: white !important;
+  box-shadow: var(--glow-primary) !important;
+}
+
+/* ========================================
+   ✨ ANIMAÇÕES AVANÇADAS
+======================================== */
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Aplica animações */
+.stApp > div {
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+section[data-testid="stSidebar"] {
+  animation: slideInFromLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   📱 RESPONSIVIDADE AVANÇADA
+======================================== */
+@media (max-width: 768px) {
+  :root {
+    --radius-glass: 12px;
+    --radius-card: 16px;
+    --radius-button: 8px;
+  }
+  
+  body {
+    background-size: 600% 600%;
+  }
+  
+  div[data-testid="stPlotlyChart"] {
+    margin: 1rem 0 !important;
+    padding: 0.75rem !important;
+  }
+  
+  div[data-testid="metric-container"] {
+    padding: 1.5rem !important;
+  }
+}
+
+/* ========================================
+   🌈 MODO ESCURO GLASSMORPHISM
+======================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-white: rgba(255, 255, 255, 0.1);
+    --glass-white-strong: rgba(255, 255, 255, 0.2);
+    --glass-dark: rgba(0, 0, 0, 0.3);
+  }
+  
+  body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7209b7 100%);
+  }
+}
+
+/* ========================================
+   🎭 EFEITOS ESPECIAIS
+======================================== */
+/* Cursor customizado */
+* {
+  cursor: default;
+}
+
+button, [role="button"], input, select {
+  cursor: pointer !important;
+}
+
+/* Scrollbar glassmorphism */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--glass-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-white-strong);
+  border-radius: 10px;
+  backdrop-filter: var(--blur-glass);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-white);
 }
