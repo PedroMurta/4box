@@ -67,7 +67,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
     #    name='Executado',
     #    line=dict(color='rgba(44, 160, 44, 0.7)', width=2)
     #))
-
+    st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     fig.add_trace(go.Scatterpolar(
         r=df_radar["Padronizado"],
         theta=df_radar["Indicador"],
@@ -133,11 +133,10 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
 
     row = df_filtrado.iloc[0]
 
-
     st.markdown(
         f"""
         <div style='
-            background-color: rgba(0,0,0,0.4);
+            background-color: #3f4f6b;
             color: white;
             border-radius: 10px;
             padding: 10px;
@@ -147,7 +146,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
             box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
             margin-bottom: 10px;
         '>
-            📊 Indicadores ({agrupamento_opcao})
+            📊 Indicadores Normalizados ({agrupamento_opcao})
         </div>
         """,
         unsafe_allow_html=True
@@ -162,20 +161,98 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
 
         valor_exec *= mult
 
-        #col1, col2 = st.columns(2)
-        #with col1:
-        #    st.markdown(f"""
-        #        <div style="background-color: rgba(0,0,0,0.4); color: white; border-radius: 10px;
-        #                    padding: 10px; text-align: center; margin-bottom: 10px;">
-        #            <div style="font-size: 15px;">{nome} - Executado</div>
-        #            <div style="font-size: 22px; font-weight: bold;">{valor_exec:.0f}%</div>
-        #        </div>
-        #    """, unsafe_allow_html=True)
-        #with col2:
-        st.markdown(f"""
-                <div style="background-color: #3f4f6b; color: white; border-radius: 10px;
-                            padding: 10px; text-align: center; margin-bottom: 10px;">
-                    <div style="font-size: 15px;">{nome} - Padronizado</div>
-                    <div style="font-size: 22px; font-weight: bold;">{valor_pad:.2f}</div>
-                </div>
-            """, unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+                    <div style="background-color: rgba(31, 119, 180, 0.8); color: white; border-radius: 10px;
+                                padding: 10px; text-align: center; margin-bottom: 10px;">
+                        <div style="font-size: 15px;">{nome} - Padronizado</div>
+                        <div style="font-size: 22px; font-weight: bold;">{valor_pad:.2f}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+                    <div style="background-color: rgba(0,0,0,0.4); color: black; border-radius: 10px;
+                                padding: 10px; text-align: center; margin-bottom: 10px;">
+                        <div style="font-size: 15px;">{nome} - Execução</div>
+                        <div style="font-size: 22px; font-weight: bold;">{valor_exec:.2f}%</div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+
+'''
+# 14. ABA METODOLOGIA
+elif aba_selecionada == "Metodologia":
+    st.markdown(f"<br><br>", unsafe_allow_html=True)
+
+    st.markdown("""
+### 📐 Metodologia de Padronização dos Indicadores
+
+A padronização tem como objetivo **tornar os indicadores comparáveis** entre unidades, períodos e contextos distintos, permitindo análises mais consistentes e justas.
+
+---
+
+### 🔢 Fórmulas de Cálculo das Notas
+
+| Indicador                | Fórmula Utilizada                                              | Interpretação                                                                 |
+|--------------------------|----------------------------------------------------------------|--------------------------------------------------------------------------------|
+| **Produção**             | `1 + ((Produção - Meta) / 100)`                                 | Avalia o desempenho da produção em relação à meta de 100%                      |
+| **Receita**              | `1 + ((Receita - Meta) / 100)`                              | Mede o percentual de alcance da receita em relação à previsão                 |
+| **Custo**                | `1 + ((Meta - Execução do Custo) / 100)`                       | Penaliza execuções acima da meta (quanto menor o custo, melhor a nota)        |
+| **Orçamento**            | `1 - (abs(Meta - Execução Orçamentária) / 100)`                 | Nota máxima quando há aderência total à meta orçamentária                     |
+| **Caixa**                | `1 + ((Caixa - Meta) / 100)`                          | Avalia o saldo financeiro em relação à meta esperada                          |
+| **Capacidade Produtiva** | `Capacidade Produtiva / 100`                                   | Mede o nível de uso da capacidade produtiva da unidade                        |
+| **NPS**                  | `Nota NPS` (sem transformação)                                 | Já é uma nota padronizada de satisfação do cliente                            |
+
+---
+
+### ⏲️ Periodicidade das Notas
+
+As notas são calculadas para os seguintes períodos:
+
+- **Mensal** (por competência)
+- **Trimestral** (T1 a T4)
+- **Semestral** (S1 e S2)
+- **Anual** (valor agregado do ano)
+
+Cada período considera os dados por **empresa(SEST ou SENAT)**, **unidade operacional** e **tempo**.
+
+---
+
+### ⚙️ Regras Complementares
+
+- **Notas ausentes** são preenchidas com `0`, evitando distorções na análise.
+- Para competências **anteriores a maio de 2024**, aplica-se uma **nota NPS padrão igual a 1**, devido à ausência de dados.
+
+---
+
+### ✂️ Tratamento de Valores Extremos (Clipping)
+
+Antes da normalização das notas para a escala de **0 a 1**, é realizada uma técnica chamada **clipping**, que remove os valores extremos (_*outliers*_).
+
+Esses valores muito altos ou baixos podem distorcer os resultados e gerar interpretações erradas sobre o desempenho das unidades. O clipping atua como um "corte nas pontas", focando nos valores mais representativos do conjunto.
+
+#### Limites aplicados por indicador:
+
+| Indicador         | Limite Inferior | Limite Superior |
+|-------------------|------------------|------------------|
+| **Orçamento**     | 5%               | Sem limite       |
+| **Receita**       | 5%               | 85%              |
+| **Custo**         | 20%              | 95%              |
+| **Produção**      | 5%               | 85%              |
+| **Caixa**         | 5%               | 90%              |
+
+> Após esse tratamento, os valores restantes são normalizados para a escala de **0 a 1**, onde:
+>
+> - **0** representa o pior desempenho (dentro do intervalo considerado);
+> - **1** representa o melhor desempenho (dentro do intervalo considerado).
+
+As notas de **NPS** e **Capacidade Produtiva** não passam por essa normalização, mantendo seus valores originais.
+
+---
+
+Essa metodologia permite uma avaliação mais justa e comparável entre diferentes unidades, períodos e contextos operacionais.
+""")
+
+
+'''

@@ -137,7 +137,8 @@ def grafico_fourbox(
 
     # Layout final
     fig.update_layout(
-        height=800,
+        height=1100,
+        width=1100,
         paper_bgcolor='ghostwhite',
         plot_bgcolor='ghostwhite',
         xaxis=dict(range=[0, 1], tickvals=[], showticklabels=False),
