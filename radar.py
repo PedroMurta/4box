@@ -57,7 +57,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
         r=valores_padronizados,
         theta=indicadores,
         fill='toself',
-        name='Indicadores Padronizados',
+        name='Indicadores Normalizados',
         line=dict(color='rgba(31, 119, 180, 0.8)', width=2),
         fillcolor='rgba(31, 119, 180, 0.3)'
     ))
@@ -216,18 +216,21 @@ def calcular_valores_periodo(df_filtrado):
     
     # Produção (média ponderada ou soma)
     nota_producao = df_filtrado["nota_producao"].mean() * 100
-    
+    nota_nps = df_filtrado["nota_nps"].mean() * 100
+
     # Calcular indicadores
     custo = (soma_custo_realizado / soma_meta * 100) if soma_meta > 0 else 0
     orcamento = (despesa_liquidada / despesa_prevista * 100) if despesa_prevista > 0 else 0
     caixa = (receitas / despesas * 100) if despesas > 0 else 0
     producao = nota_producao
+    nps= nota_nps
     receita = (receita_realizada / receita_prevista * 100) if receita_prevista > 0 else 0
     
     return {
         "custo": custo,
         "orcamento": orcamento, 
         "caixa": caixa,
+        "nps": nps,
         "producao": producao,
         "receita": receita
     }
@@ -273,6 +276,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
         colunas_padronizadas = [
             f"nota_custo{sufixo}_padronizada",
             f"nota_producao{sufixo}_padronizada",
+            f"nota_nps{sufixo}_padronizada",
             f"nota_caixa{sufixo}_padronizada", 
             f"nota_orcamento{sufixo}_padronizada",
             f"nota_receita{sufixo}_padronizada"
@@ -287,7 +291,8 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
     indicadores_config = [
         ("custo", "💸 Custo", "custo"),
         ("producao", "🏭 Produção", "producao"),
-        ("caixa", "💰 Caixa", "caixa"),
+        ("nps", "🌟 NPS", "nps"),
+        ("caixa", "💰 Caixa", "caixa"),        
         ("orcamento", "📊 Orçamento", "orcamento"),
         ("receita", "📈 Receita", "receita")
     ]
@@ -341,7 +346,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
                     font-weight: bold;
                 ">
                     <div style="font-size: 16px; margin-bottom: 8px;">
-                        {nome_display} - Padronizado
+                        {nome_display} - Normalizado
                     </div>
                     <div style="font-size: 24px; font-weight: bold;">
                         {valor_padronizado:.2f}
