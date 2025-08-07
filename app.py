@@ -29,7 +29,7 @@ with open("estilo.css") as f:
 @st.cache_data
 def carregar_e_processar_dados():
     """Carrega e processa todos os dados de uma só vez"""
-    df = pd.read_parquet("indicadores_4box_padronizado1.parquet")
+    df = pd.read_parquet("indicadores_4box_padronizado.parquet")
     
     # Renomeações
     df.rename(columns={
@@ -74,9 +74,21 @@ COLUNA_PERIODO_MAP = {
 }
 
 # Configuração de abas (constante)
+#ABAS_CONFIG = {
+#    "options": ["Painel 4Box", "Radar", "Atendimentos", "Orçamento/Receita", "Custo", "Caixa"],
+#    "icons": ["bar-chart", "activity", "clock", "box", "graph-up", "credit-card"],
+#    "styles": {
+#        "container": {"padding": "0!important", "background-color": "#fafafa"},
+#        "icon": {"color": "#b7bc75", "font-size": "18px"},
+#        "nav-link": {"font-size": "12px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
+#        "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
+#    }
+#}
+
+# Configuração de abas (constante)
 ABAS_CONFIG = {
-    "options": ["Painel 4Box", "Radar", "Atendimentos", "Orçamento/Receita", "Custo", "Caixa"],
-    "icons": ["bar-chart", "activity", "clock", "box", "graph-up", "credit-card"],
+    "options": ["Painel 4Box", "Radar"],
+    "icons": ["bar-chart", "activity"],
     "styles": {
         "container": {"padding": "0!important", "background-color": "#fafafa"},
         "icon": {"color": "#b7bc75", "font-size": "18px"},
@@ -111,24 +123,24 @@ def main():
                            coluna_periodo, variaveis_x, pesos_x, variaveis_y, 
                            pesos_y, nome_map, filtro_col)
     
-    elif aba_selecionada == "Atendimentos":
-        renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, 
-                                   coluna_periodo)
+    #elif aba_selecionada == "Atendimentos":
+    #    renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, 
+    #                               coluna_periodo)
     
-    elif aba_selecionada == "Custo":
-        renderizar_aba_custo(df, empresa_sel, unidade_sel, competencia_sel)
+    #elif aba_selecionada == "Custo":
+    #    renderizar_aba_custo(df, empresa_sel, unidade_sel, competencia_sel)
     
-    elif aba_selecionada == "Orçamento/Receita":
-        renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, 
-                                coluna_periodo)
+    #elif aba_selecionada == "Orçamento/Receita":
+    #    renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, 
+    #                           coluna_periodo)
     
     elif aba_selecionada == "Radar":
         renderizar_aba_radar(df, empresa_sel, unidade_sel, competencia_sel, 
                             agrupamento_opcao)
     
-    elif aba_selecionada == "Caixa":
-        renderizar_aba_caixa(df, empresa_sel, unidade_sel, competencia_sel, 
-                            coluna_periodo)
+    #elif aba_selecionada == "Caixa":
+    #    renderizar_aba_caixa(df, empresa_sel, unidade_sel, competencia_sel, 
+    #                        coluna_periodo)
 
 # Funções de renderização (separadas para melhor organização)
 def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel, 

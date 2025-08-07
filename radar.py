@@ -4,22 +4,25 @@ import streamlit as st
 import plotly.graph_objects as go
 
 def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
-    """Gráfico radar com cálculos diretos das colunas do DataFrame"""
+    """Gráfico radar com valores padronizados - Versão Final"""
     
     # Mapeamento de filtros e sufixos
-    filtro_col = {
+    mapeamento_filtro = {
         "Mês": "competencia",
         "Trimestre": "trimestre",
         "Semestre": "ano_semestre", 
         "Ano": "ano"
-    }[agrupamento_opcao]
+    }
     
-    sufixo = {
+    mapeamento_sufixo = {
         "Mês": "_mensal",
         "Trimestre": "_trimestral",
         "Semestre": "_semestral",
         "Ano": "_anual"
-    }[agrupamento_opcao]
+    }
+    
+    filtro_col = mapeamento_filtro[agrupamento_opcao]
+    sufixo = mapeamento_sufixo[agrupamento_opcao]
     
     # Filtrar dados
     df_filtrado = df[
@@ -39,55 +42,32 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
         )
         return fig
     
-    # Calcular valores agregados por período (Coluna 2)
-    valores_agregados = calcular_valores_periodo(df_filtrado)
-    
-    # Pegar valores padronizados (Coluna 1)
-    if len(df_filtrado) == 1:
-        row = df_filtrado.iloc[0]
-    else:
-        # Para múltiplas linhas, fazer média dos valores padronizados
-        colunas_padronizadas = [
-            f"nota_custo{sufixo}_padronizada",
-            f"nota_producao{sufixo}_padronizada", 
-            f"nota_caixa{sufixo}_padronizada",
-            f"nota_orcamento{sufixo}_padronizada",
-            f"nota_receita{sufixo}_padronizada"
-        ]
-        row = df_filtrado[colunas_padronizadas].mean()
-    
-    # Valores padronizados (Coluna 1)
-    valores_padronizados = [
-        row.get(f"nota_custo{sufixo}_padronizada", 0),
-        row.get(f"nota_producao{sufixo}_padronizada", 0),
-        row.get(f"nota_caixa{sufixo}_padronizada", 0), 
-        row.get(f"nota_orcamento{sufixo}_padronizada", 0),
-        row.get(f"nota_receita{sufixo}_padronizada", 0)
-    ]
-    
-    indicadores = ["Custo", "Produção", "Caixa", "Orçamento", "Receita"]
+    # Obter valores padronizados
+    valores_padronizados = obter_valores_padronizados(df_filtrado, sufixo)
+    indicadores = ["Custo", "Produção", "NPS", "Caixa", "Orçamento", "Receita"]
     
     # Criar gráfico radar
     fig = go.Figure()
     
-    # Trace valores padronizados (Coluna 1)
+    # Trace valores padronizados
     fig.add_trace(go.Scatterpolar(
         r=valores_padronizados,
         theta=indicadores,
         fill='toself',
-        name='Padronizado',
+        name='Indicadores Padronizados',
         line=dict(color='rgba(31, 119, 180, 0.8)', width=3),
         fillcolor='rgba(31, 119, 180, 0.3)'
     ))
     
-    # Layout
+    # Layout otimizado
     fig.update_layout(
         polar=dict(
             gridshape="linear",
             radialaxis=dict(
                 visible=True,
                 range=[0, 1],
-                tickfont=dict(size=12)
+                tickfont=dict(size=12),
+                tickformat=".2f"
             ),
             angularaxis=dict(
                 tickfont=dict(size=13),
@@ -96,16 +76,125 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
             )
         ),
         height=700,
-        margin=dict(l=60, r=60, t=60, b=60),
+        margin=dict(l=60, r=60, t=80, b=60),
         title=dict(
-            text=f"Radar de Notas - {agrupamento_opcao}",
+            text=f"Radar de Indicadores - {agrupamento_opcao}",
             x=0.5,
-            font=dict(size=16)
+            font=dict(size=16, color='#2c3e50')
         ),
-        showlegend=True
+        showlegend=False,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
+
+
+def obter_valores_originais(df_filtrado):
+    """
+    Obtém valores originais (não padronizados) de forma segura
+    
+    Args:
+        df_filtrado: DataFrame já filtrado
+        sufixo: Sufixo do período (_mensal, _trimestral, etc.)
+    
+    Returns:
+        list: Lista com valores originais na ordem [custo, produção, nps, caixa, orçamento, receita]
+    """
+    # Definir colunas originais na ordem correta
+    colunas_ordem = [
+        f"nota_custo",
+        f"nota_producao",
+        f"nota_nps",
+        f"nota_caixa",
+        f"nota_orcamento",
+        f"nota_receita"
+    ]
+    
+    # Verificar quais colunas existem
+    colunas_existentes = [col for col in colunas_ordem if col in df_filtrado.columns]
+    
+    
+    # Obter valores (média se múltiplas linhas)
+    if len(df_filtrado) == 1:
+        row = df_filtrado.iloc[0]
+    else:
+        row = df_filtrado[colunas_existentes].mean()
+    
+    # Extrair valores na ordem correta, convertendo para percentuais onde necessário
+    valores = []
+    for i, col in enumerate(colunas_ordem):
+        if col in df_filtrado.columns:
+            valor = row.get(col, 0)
+            # Garantir que não é NaN
+            if pd.isna(valor):
+                valor = 0
+            
+            # Converter valores para formato de exibição apropriado
+            if i == 2:  # NPS (índice 2)
+                # NPS já deve estar em escala apropriada (normalmente 0-1 ou 0-100)
+                # Vamos assumir que está em 0-1 e converter para escala -100 a +100
+                if valor <= 1:
+                    valor = valor * 200 - 100  # Converte 0-1 para -100 a +100
+                valores.append(float(valor))
+            else:  # Outros indicadores (custo, produção, caixa, orçamento, receita)
+                # Se valor está entre 0-1, converter para percentual
+                if valor <= 1:
+                    valor = valor * 100
+                valores.append(float(valor))
+        else:
+            valores.append(0.0)
+    
+    return valores
+
+def obter_valores_padronizados(df_filtrado, sufixo):
+    """
+    Obtém valores padronizados de forma segura
+    
+    Args:
+        df_filtrado: DataFrame já filtrado
+        sufixo: Sufixo do período (_mensal, _trimestral, etc.)
+    
+    Returns:
+        list: Lista com valores padronizados na ordem [custo, produção, nps, caixa, orçamento, receita]
+    """
+    # Definir colunas padronizadas na ordem correta
+    colunas_ordem = [
+        f"nota_custo{sufixo}_padronizada",
+        f"nota_producao{sufixo}_padronizada",
+        f"nota_nps{sufixo}_padronizada",
+        f"nota_caixa{sufixo}_padronizada",
+        f"nota_orcamento{sufixo}_padronizada",
+        f"nota_receita{sufixo}_padronizada"
+    ]
+    
+    # Verificar quais colunas existem
+    colunas_existentes = [col for col in colunas_ordem if col in df_filtrado.columns]
+    
+    if not colunas_existentes:
+        print(f"⚠️ Nenhuma coluna padronizada encontrada para sufixo {sufixo}")
+        return [0, 0, 0, 0, 0, 0]
+    
+    # Obter valores (média se múltiplas linhas)
+    if len(df_filtrado) == 1:
+        row = df_filtrado.iloc[0]
+    else:
+        row = df_filtrado[colunas_existentes].mean()
+    
+    # Extrair valores na ordem correta, usando 0 para colunas não encontradas
+    valores = []
+    for col in colunas_ordem:
+        if col in df_filtrado.columns:
+            valor = row.get(col, 0)
+            # Garantir que não é NaN
+            if pd.isna(valor):
+                valor = 0
+            valores.append(float(valor))
+        else:
+            valores.append(0.0)
+    
+    return valores
+
 
 def calcular_valores_periodo(df_filtrado):
     """Calcula valores agregados por período usando as colunas do DataFrame"""
@@ -294,6 +383,9 @@ def debug_colunas_disponiveis(df):
     for col in sorted(colunas_relevantes):
         print(f"   - {col}")
     return colunas_relevantes
+
+
+
 
 
 '''
