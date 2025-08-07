@@ -118,22 +118,6 @@ def sidebar_filtros(df):
                 idx = 0
             competencia_sel = st.selectbox("Período:", opcoes, index=idx)
         
-        # Filtros avançados
-        with st.popover("🎛️ Filtros Avançados"):
-            conselho_sel = st.selectbox(
-                "Conselho:",
-                ["Todos"] + sorted(df_empresa["conselho"].dropna().unique())
-            )
-            
-            unidade_sel = st.selectbox(
-                "Unidade:",
-                ["Todas"] + sorted(df_empresa["unidade"].dropna().unique())
-            )
-            
-            tipologia_sel = st.selectbox(
-                "Tipologia:",
-                ["Todas"] + sorted(df_empresa["tipologia"].dropna().unique())
-            )
         
         # Configuração de eixos
         with st.popover("🔧 Ajustar Pesos dos Eixos"):
@@ -166,6 +150,24 @@ def sidebar_filtros(df):
             for i, col in enumerate(colunas_y_base):
                 peso = seletor_peso_otimizado(BASE_LABELS[col], key=f"peso_y_{i}")
                 pesos_y.append(peso)
+
+        # Filtros avançados
+        with st.popover("🎛️ Filtros Avançados"):
+            conselho_sel = st.selectbox(
+                "Conselho:",
+                ["Todos"] + sorted(df_empresa["conselho"].dropna().unique())
+            )
+            
+            unidade_sel = st.selectbox(
+                "Unidade:",
+                ["Todas"] + sorted(df_empresa["unidade"].dropna().unique())
+            )
+            
+            tipologia_sel = st.selectbox(
+                "Tipologia:",
+                ["Todas"] + sorted(df_empresa["tipologia"].dropna().unique())
+            )
+        
     
     # Aplicar sufixos e preparar dados finais
     sufixo = SUFIXO_MAP.get(filtro_col, "")

@@ -29,7 +29,7 @@ with open("estilo.css") as f:
 @st.cache_data
 def carregar_e_processar_dados():
     """Carrega e processa todos os dados de uma só vez"""
-    df = pd.read_parquet("indicadores_4box_padronizado.parquet")
+    df = pd.read_parquet("indicadores_4box_padronizado2.parquet")
     
     # Renomeações
     df.rename(columns={
