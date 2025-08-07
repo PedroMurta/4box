@@ -49,16 +49,18 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
     # Criar gráfico radar
     fig = go.Figure()
     
-    # Trace valores padronizados
+    # Fecha o polígono repetindo o primeiro ponto no final
+    valores_padronizados.append(valores_padronizados[0])
+    indicadores.append(indicadores[0])
+
     fig.add_trace(go.Scatterpolar(
         r=valores_padronizados,
         theta=indicadores,
         fill='toself',
         name='Indicadores Padronizados',
-        line=dict(color='rgba(31, 119, 180, 0.8)', width=3),
+        line=dict(color='rgba(31, 119, 180, 0.8)', width=2),
         fillcolor='rgba(31, 119, 180, 0.3)'
     ))
-    
     # Layout otimizado
     fig.update_layout(
         polar=dict(
