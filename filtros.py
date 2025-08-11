@@ -65,7 +65,7 @@ def processar_dados_temporais(df):
 
 def seletor_peso_otimizado(label, key=None):
     """Seletor de peso otimizado"""
-    idx = PESO_DEFAULT[label] - 1
+    idx = PESO_DEFAULT.get(label, 1) - 1
     return st.selectbox(
         label,
         options=PESO_OPTIONS,
@@ -73,6 +73,53 @@ def seletor_peso_otimizado(label, key=None):
         format_func=lambda x: x[0],
         key=key
     )[1]
+
+def criar_dropdowns_peso_em_linha(colunas_selecionadas, prefixo_key, titulo):
+    """
+    Cria dropdowns de peso organizados em linha
+    
+    Args:
+        colunas_selecionadas: Lista de colunas base selecionadas
+        prefixo_key: Prefixo para as keys dos selectbox
+        titulo: Título da seção
+    
+    Returns:
+        Lista de pesos selecionados
+    """
+    st.markdown(f"**{titulo}**")
+    
+    if not colunas_selecionadas:
+        st.warning("Selecione pelo menos uma variável")
+        return []
+    
+    num_colunas = len(colunas_selecionadas)
+    pesos = []
+    
+    # Criar colunas dinamicamente baseado no número de variáveis
+    if num_colunas == 1:
+        cols = [st.container()]
+    elif num_colunas == 2:
+        cols = st.columns(2)
+    elif num_colunas == 3:
+        cols = st.columns(3)
+    else:  # 4 ou mais
+        cols = st.columns(4)
+    
+    # Distribuir os dropdowns pelas colunas
+    for i, col_base in enumerate(colunas_selecionadas):
+        label = BASE_LABELS[col_base]
+        
+        # Usar a coluna correspondente (circular se houver mais variáveis que colunas)
+        col_index = i % len(cols)
+        
+        with cols[col_index]:
+            peso = seletor_peso_otimizado(
+                label, 
+                key=f"{prefixo_key}_{i}"
+            )
+            pesos.append(peso)
+    
+    return pesos
 
 def aplicar_filtros_avancados(df_empresa, conselho_sel, tipologia_sel, unidade_sel):
     """Aplica filtros avançados de forma eficiente"""
@@ -88,11 +135,12 @@ def aplicar_filtros_avancados(df_empresa, conselho_sel, tipologia_sel, unidade_s
     return df_empresa[mask].copy()
 
 def sidebar_filtros(df):
-    """Função principal de filtros otimizada"""
+    """Função principal de filtros otimizada - VERSÃO COM DROPDOWNS EM LINHA"""
     df = processar_dados_temporais(df)
     nome_map = criar_nome_map()
     
     with st.sidebar:
+        st.image('sestsenat_0.jpg', width=280)
         st.markdown("### Filtros")
         
         # Filtros básicos
@@ -117,41 +165,8 @@ def sidebar_filtros(df):
             except (ValueError, IndexError):
                 idx = 0
             competencia_sel = st.selectbox("Período:", opcoes, index=idx)
-        
-        
-        # Configuração de eixos
-        with st.popover("🔧 Ajustar Pesos dos Eixos"):
-            colunas_base = list(BASE_LABELS.keys())
             
-            st.markdown("##### Pesos Eixo X (Operação)")
-            colunas_x_base = st.multiselect(
-                "Variáveis do Eixo X",
-                options=colunas_base,
-                default=["nota_orcamento", "nota_caixa", "nota_nps"],
-                format_func=lambda x: BASE_LABELS[x],
-                max_selections=4
-            )
-            
-            pesos_x = []
-            for i, col in enumerate(colunas_x_base):
-                peso = seletor_peso_otimizado(BASE_LABELS[col], key=f"peso_x_{i}")
-                pesos_x.append(peso)
-            
-            st.markdown("##### Pesos Eixo Y (Estratégia)")
-            colunas_y_base = st.multiselect(
-                "Variáveis do Eixo Y", 
-                options=colunas_base,
-                default=["nota_receita", "nota_custo", "nota_producao"],
-                format_func=lambda x: BASE_LABELS[x],
-                max_selections=4
-            )
-            
-            pesos_y = []
-            for i, col in enumerate(colunas_y_base):
-                peso = seletor_peso_otimizado(BASE_LABELS[col], key=f"peso_y_{i}")
-                pesos_y.append(peso)
-
-        # Filtros avançados
+         # Filtros avançados
         with st.popover("🎛️ Filtros Avançados"):
             conselho_sel = st.selectbox(
                 "Conselho:",
@@ -168,6 +183,48 @@ def sidebar_filtros(df):
                 ["Todas"] + sorted(df_empresa["tipologia"].dropna().unique())
             )
         
+        # 🔧 CONFIGURAÇÃO DE EIXOS MODIFICADA - DROPDOWNS EM LINHA
+        with st.popover("🔧 Ajustar Pesos dos Eixos"):
+            colunas_base = list(BASE_LABELS.keys())
+            
+            # Seleção das variáveis do Eixo X
+            st.markdown("#### Pesos Eixo X (Operação)")
+            colunas_x_base = st.multiselect(
+                "Variáveis do Eixo X",
+                options=colunas_base,
+                default=["nota_orcamento", "nota_caixa", "nota_nps"],
+                format_func=lambda x: BASE_LABELS[x],
+                max_selections=4,
+                key="multiselect_x"
+            )
+            
+            # 🎯 DROPDOWNS DE PESO EM LINHA - EIXO X
+            pesos_x = criar_dropdowns_peso_em_linha(
+                colunas_x_base, 
+                "peso_x", 
+                "🎯 Pesos:"
+            )
+            
+            # Separador visual
+            st.markdown("---")
+            
+            # Seleção das variáveis do Eixo Y
+            st.markdown("#### Pesos Eixo Y (Estratégia)")
+            colunas_y_base = st.multiselect(
+                "Variáveis do Eixo Y", 
+                options=colunas_base,
+                default=["nota_receita", "nota_custo", "nota_producao"],
+                format_func=lambda x: BASE_LABELS[x],
+                max_selections=4,
+                key="multiselect_y"
+            )
+            
+            # 🎯 DROPDOWNS DE PESO EM LINHA - EIXO Y
+            pesos_y = criar_dropdowns_peso_em_linha(
+                colunas_y_base, 
+                "peso_y", 
+                "🎯 Pesos:"
+            )
     
     # Aplicar sufixos e preparar dados finais
     sufixo = SUFIXO_MAP.get(filtro_col, "")
@@ -214,3 +271,41 @@ def aplicar_sufixos_colunas(colunas, filtro_col):
             colunas_processadas.append(col_base + sufixo)
     
     return colunas_processadas
+
+# ============================================================================
+# 🎨 FUNÇÃO ADICIONAL: CSS PARA DROPDOWNS MAIS COMPACTOS (OPCIONAL)
+# ============================================================================
+def aplicar_estilo_dropdowns_compactos():
+    """
+    Aplica CSS para deixar os dropdowns de peso mais compactos
+    """
+    st.markdown("""
+    <style>
+    /* Dropdowns de peso mais compactos */
+    div[data-testid="column"] .stSelectbox {
+        margin-bottom: 8px;
+    }
+    
+    div[data-testid="column"] .stSelectbox > label {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    div[data-testid="column"] .stSelectbox > div {
+        margin-bottom: 0;
+    }
+    
+    /* Popover mais largo para acomodar dropdowns em linha */
+    .stPopover > div {
+        min-width: 400px !important;
+    }
+    
+    /* Título dos pesos com destaque */
+    .stMarkdown strong {
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-size: 14px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
