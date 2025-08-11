@@ -140,7 +140,7 @@ def sidebar_filtros(df):
     nome_map = criar_nome_map()
     
     with st.sidebar:
-        st.image('sestsenat_0.jpg', width=280)
+        st.image('sestsenat_0.png', width=280)
         st.markdown("### Filtros")
         
         # Filtros básicos

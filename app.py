@@ -17,7 +17,7 @@ from radar import grafico_radar_notas, exibir_cards_radar
 st.set_page_config(
     layout="wide",
     page_title="Painel 4Box",
-    initial_sidebar_state="expanded",
+    #initial_sidebar_state="expanded",
     page_icon="icone_ss.png"
 )
 
@@ -216,7 +216,7 @@ def renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, colu
     exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo)
 
 def renderizar_aba_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
-    st.subheader("📡 Radar de Notas por Indicador")
+    st.subheader("📡 Radar de Indicadores")
     st.markdown(f"<h4 style='text-align: center;'><b>{unidade_sel} ({competencia_sel})</b></h4><br>", 
                unsafe_allow_html=True)
     

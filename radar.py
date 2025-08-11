@@ -290,7 +290,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
     # Configuração dos indicadores
     indicadores_config = [
         ("custo", "💸 Custo", "custo"),
-        ("producao", "🏭 Produção", "producao"),
+        ("producao", "🥼 Produção", "producao"),
         ("nps", "🌟 NPS", "nps"),
         ("caixa", "💰 Caixa", "caixa"),        
         ("orcamento", "📊 Orçamento", "orcamento"),

@@ -39,10 +39,11 @@ def colorir_nota_otimizado(valor):
         return f"<span style='color:#999999'>N/A</span>"
     
     cor_map = {
-        (lambda x: x < 0): "#e64937",
-        (lambda x: x < 0.7): "#ff9999", 
-        (lambda x: x < 1): "#a7cf30",
-        (lambda x: x < 1.2): "#13eb66",
+        (lambda x: x < 0.3): "#e64937",
+        (lambda x: x < 0.5): "#ce5656", 
+        (lambda x: x < 0.6): "#928D49",
+        (lambda x: x < 0.8): "#45cf30",
+        (lambda x: x < 1.2): "#1071d2",
         (lambda x: True): "#0066cc"  # default
     }
     
@@ -85,13 +86,14 @@ def preparar_dados_hover(df, colunas_x, colunas_y, nome_map):
     
     return df, custom_cols
 
-def criar_template_hover(colunas_x, colunas_y, nome_map):
-    """Cria template de hover de forma otimizada"""
+def criar_template_hover(colunas_x, colunas_y, nome_map, font_size=14):
+    """Cria template de hover com tamanho de fonte ajustável"""
     base_template = (
-        "<b>%{hovertext}</b><br>"
-        "Nota Eixo X: %{customdata[0]}<br>"
-        "Nota Eixo Y: %{customdata[1]}<br>"
-        "Idade da Unidade: %{customdata[2]} ano(s)<br>"
+        f"<span style='font-size:{font_size}px'>"
+        "<b>%{hovertext}</b><br><br>"
+        "Índice Operação: %{customdata[0]}<br>"
+        "Índice Estratégia: %{customdata[1]}<br><br>"
+        "Idade da Unidade: %{customdata[2]} ano(s)<br><br>"
     )
     
     indicadores_template = ""
@@ -100,7 +102,7 @@ def criar_template_hover(colunas_x, colunas_y, nome_map):
             nome = nome_map[col]
             indicadores_template += f"{nome}: %{{customdata[{i}]}}<br>"
     
-    return base_template + indicadores_template + "<extra></extra>"
+    return base_template + indicadores_template + "</span><extra></extra>"
 
 def adicionar_quadrantes(fig):
     """Adiciona quadrantes de forma otimizada"""
