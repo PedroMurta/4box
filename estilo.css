@@ -159,7 +159,7 @@ section[data-testid="stSidebar"] .stButton > button {
   overflow: hidden !important;
   cursor: pointer !important;
   margin: 0.5rem 0 !important;
-  width: 100% !important;
+  width: 90% !important;
 }
 
 /* Efeito hover nos botões */

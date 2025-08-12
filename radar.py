@@ -3,122 +3,104 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 
+import plotly.graph_objects as go
+
 def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
     """Gráfico radar com valores padronizados - SEST vs SENAT"""
-    
-    # Mapeamento de filtros e sufixos
+
+    # Mapas de período/sufixo
     mapeamento_filtro = {
         "Mês": "competencia",
         "Trimestre": "trimestre",
-        "Semestre": "ano_semestre", 
-        "Ano": "ano"
+        "Semestre": "ano_semestre",
+        "Ano": "ano",
     }
-    
     mapeamento_sufixo = {
         "Mês": "_mensal",
         "Trimestre": "_trimestral",
         "Semestre": "_semestral",
-        "Ano": "_anual"
+        "Ano": "_anual",
     }
-    
+
     filtro_col = mapeamento_filtro[agrupamento_opcao]
     sufixo = mapeamento_sufixo[agrupamento_opcao]
-    
-    # Criar gráfico radar
+
+    # Cores por empresa
+    cores_borda = {"SEST": "rgba(31,119,180,0.9)", "SENAT": "rgba(255,127,14,0.9)"}
+    cores_fill  = {"SEST": "rgba(31,119,180,0.30)", "SENAT": "rgba(255,127,14,0.30)"}
+
+    # Ordem dos eixos
+    indicadores = ["💸 Custo", "🥼 Produção", "🌟 NPS", "💰 Caixa", "📊 Orçamento", "📈 Receita"]
+    empresas = ["SEST", "SENAT"]
+
     fig = go.Figure()
-    
-    # Cores para as empresas
-    cores = {
-        'SEST': 'rgba(31, 119, 180, 0.8)',   # Azul para SEST
-        'SENAT': 'rgba(255, 127, 14, 0.8)'   # Laranja para SENAT
-    }
-    cores_fill = {
-        'SEST': 'rgba(31, 119, 180, 0.3)',
-        'SENAT': 'rgba(255, 127, 14, 0.3)'
-    }
-    
-    indicadores = ["Custo", "Produção", "NPS", "Caixa", "Orçamento", "Receita"]
-    empresas = ['SEST', 'SENAT']
     traces_adicionados = 0
-    
-    # Processar cada empresa
+
     for empresa in empresas:
-        # Filtrar dados para esta empresa
-        df_filtrado = df[
-            (df["empresa"] == empresa) &
-            (df[filtro_col] == competencia_sel)
-        ]
-        
+        dfe = df[(df["empresa"] == empresa) & (df[filtro_col] == competencia_sel)]
         if unidade_sel != "Todas":
-            df_filtrado = df_filtrado[df_filtrado["unidade"] == unidade_sel]
-        
-        if df_filtrado.empty:
+            dfe = dfe[dfe["unidade"] == unidade_sel]
+
+        if dfe.empty:
             continue
-        
-        # Obter valores padronizados
-        valores_padronizados = obter_valores_padronizados(df_filtrado, sufixo)
-        
-        # Fechar o polígono repetindo o primeiro ponto
-        valores_padronizados_fechado = valores_padronizados + [valores_padronizados[0]]
-        indicadores_fechado = indicadores + [indicadores[0]]
-        
-        # Adicionar trace para esta empresa
+
+        # Obtém valores padronizados (0–1) mantendo a ordem dos indicadores
+        valores = obter_valores_padronizados(dfe, sufixo)
+        # Fecha o polígono sem mutar listas originais
+        r_vals = valores + [valores[0]]
+        th_vals = indicadores + [indicadores[0]]
+
         fig.add_trace(go.Scatterpolar(
-            r=valores_padronizados_fechado,
-            theta=indicadores_fechado,
+            r=r_vals,
+            theta=th_vals,
+            name=empresa,
             fill='toself',
-            name=f'{empresa}',
-            line=dict(color=cores[empresa], width=2),
-            fillcolor=cores_fill[empresa]
+            line=dict(color=cores_borda[empresa], width=2),
+            fillcolor=cores_fill[empresa],
+            hovertemplate="<b>%{theta}</b><br>Valor: %{r:.2f}<extra>" + empresa + "</extra>"
         ))
-        
         traces_adicionados += 1
-    
-    # Se não há dados, mostrar mensagem
+
     if traces_adicionados == 0:
         fig.add_annotation(
             text="Sem dados disponíveis para os filtros selecionados",
-            xref="paper", yref="paper", x=0.5, y=0.5,
+            xref="paper", yref="paper", x=0.5, y=0.25,
             showarrow=False, font_size=16
         )
         fig.update_layout(
             height=930,
             margin=dict(l=60, r=60, t=80, b=60),
             paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)'
+            plot_bgcolor='rgba(0,0,0,0)',
+            showlegend=False
         )
         return fig
-    
-    # Layout otimizado
+
+    # Layout final com legenda à esquerda
     fig.update_layout(
         polar=dict(
             gridshape="linear",
-            radialaxis=dict(
-                visible=True,
-                range=[0, 1],
-                tickfont=dict(size=12),
-                tickformat=".2f"
-            ),
-            angularaxis=dict(
-                tickfont=dict(size=13),
-                rotation=90,
-                direction='clockwise'
-            )
+            radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=12), tickformat=".2f"),
+            angularaxis=dict(tickfont=dict(size=18), rotation=90, direction='clockwise'),
         ),
-        height=977,
+        height=980,
         margin=dict(l=60, r=60, t=80, b=60),
-        title=dict(
-            text=f"Radar de Indicadores - {agrupamento_opcao}<br><sub>     🔵 SEST vs 🟠 SENAT</sub>",
-            x=0.7,
-            font=dict(size=16, color='#2c3e50')
-        ),
-        #showlegend=True,
-        
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=True,
+        legend=dict(
+            x=-0.15,          # ⬅️ mais à esquerda
+            xanchor="left",
+            y=1.0,
+            yanchor="top",
+            bgcolor="rgba(255,255,255,0.6)",
+            bordercolor="rgba(0,0,0,0.25)",
+            borderwidth=1,
+            font=dict(size=12)
+        )
     )
-    
     return fig
+
 
 
 def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
@@ -154,40 +136,23 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
     st.markdown(
         f"""
         <div style='
-            background-color: #003049;
+            background-color: rgba(0, 48, 124, 0.7);            
             color: white;
             border-radius: 10px;
             padding: 15px;
             text-align: center;
             font-weight: bold;
             font-size: 18px;
-            margin-bottom: 20px;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+            margin-bottom: 20px;            
         '>
-            🧾 Indicadores por Período ({agrupamento_opcao})<br>
-            <i>{unidade_sel}</i>
+            <p style='font-size: 25 px;'><b>INDICADORES POR PERÍODO ({agrupamento_opcao})</b></p>
+            <i>{unidade_sel}</i> <br>
+            <i> 📘 SEST</i>    x     <i>📙 SENAT </i>
         </div>
         """,
         unsafe_allow_html=True
     )
-    st.markdown(
-        f"""
-        <div style='
-            background-color: #003049;
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 20px;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-        '>                     
-            <i> 📘 SEST x 📙 SENAT </i>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    
     
     # Processar dados para ambas as empresas
     empresas = ['SEST', 'SENAT']
@@ -257,18 +222,17 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
             
             st.markdown(f"""
                 <div style="
-                    background-color: #669bbc;
-                    color: white;
+                    background-color: rgba(31, 119, 180, 0.3);
+                    color: black;
                     border-radius: 10px;
                     padding: 15px;
                     text-align: center;
-                    margin-bottom: 10px;
-                    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+                    margin-bottom: 10px;                    
                     font-weight: bold;
                 ">
                     <div style="font-size: 21px; margin-bottom: 8px;">                        
                     </div>
-                    <div style="font-size: 21px; margin-bottom: 8px; color: #ddd;">
+                    <div style="font-size: 21px; margin-bottom: 8px; color: black;">
                         {nome_display} 
                     </div>
                     <div style="font-size: 15px; font-weight: bold;">
@@ -293,13 +257,12 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
             
             st.markdown(f"""
                 <div style="
-                    background-color: #fdf0d5;
+                    background-color: rgba(255, 127, 14, 0.3);
                     color: black;
                     border-radius: 10px;
                     padding: 15px;
                     text-align: center;
-                    margin-bottom: 10px;
-                    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+                    margin-bottom: 10px;                    
                     font-weight: bold;
                 ">
                     <div style="font-size: 21px; margin-bottom: 8px;">                        

@@ -141,7 +141,7 @@ def sidebar_filtros(df):
     
     with st.sidebar:
         st.image('sestsenat_0.png', width=280)
-        st.markdown("### Filtros")
+        
         
         # Filtros básicos
         col1, col2 = st.columns(2)
@@ -184,7 +184,7 @@ def sidebar_filtros(df):
             )
         
         # 🔧 CONFIGURAÇÃO DE EIXOS MODIFICADA - DROPDOWNS EM LINHA
-        with st.popover("🔧 Ajustar Pesos dos Eixos"):
+        with st.popover("🔧 Indicadores e Pesos"):
             colunas_base = list(BASE_LABELS.keys())
             
             # Seleção das variáveis do Eixo X
