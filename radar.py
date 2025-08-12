@@ -4,7 +4,7 @@ import streamlit as st
 import plotly.graph_objects as go
 
 def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
-    """Gráfico radar com valores padronizados - Versão Final"""
+    """Gráfico radar com valores padronizados - SEST vs SENAT"""
     
     # Mapeamento de filtros e sufixos
     mapeamento_filtro = {
@@ -24,43 +24,71 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
     filtro_col = mapeamento_filtro[agrupamento_opcao]
     sufixo = mapeamento_sufixo[agrupamento_opcao]
     
-    # Filtrar dados
-    df_filtrado = df[
-        (df["empresa"] == empresa_sel) &
-        (df[filtro_col] == competencia_sel)
-    ]
+    # Criar gráfico radar
+    fig = go.Figure()
     
-    if unidade_sel != "Todas":
-        df_filtrado = df_filtrado[df_filtrado["unidade"] == unidade_sel]
+    # Cores para as empresas
+    cores = {
+        'SEST': 'rgba(31, 119, 180, 0.8)',   # Azul para SEST
+        'SENAT': 'rgba(255, 127, 14, 0.8)'   # Laranja para SENAT
+    }
+    cores_fill = {
+        'SEST': 'rgba(31, 119, 180, 0.3)',
+        'SENAT': 'rgba(255, 127, 14, 0.3)'
+    }
     
-    if df_filtrado.empty:
-        fig = go.Figure()
+    indicadores = ["Custo", "Produção", "NPS", "Caixa", "Orçamento", "Receita"]
+    empresas = ['SEST', 'SENAT']
+    traces_adicionados = 0
+    
+    # Processar cada empresa
+    for empresa in empresas:
+        # Filtrar dados para esta empresa
+        df_filtrado = df[
+            (df["empresa"] == empresa) &
+            (df[filtro_col] == competencia_sel)
+        ]
+        
+        if unidade_sel != "Todas":
+            df_filtrado = df_filtrado[df_filtrado["unidade"] == unidade_sel]
+        
+        if df_filtrado.empty:
+            continue
+        
+        # Obter valores padronizados
+        valores_padronizados = obter_valores_padronizados(df_filtrado, sufixo)
+        
+        # Fechar o polígono repetindo o primeiro ponto
+        valores_padronizados_fechado = valores_padronizados + [valores_padronizados[0]]
+        indicadores_fechado = indicadores + [indicadores[0]]
+        
+        # Adicionar trace para esta empresa
+        fig.add_trace(go.Scatterpolar(
+            r=valores_padronizados_fechado,
+            theta=indicadores_fechado,
+            fill='toself',
+            name=f'{empresa}',
+            line=dict(color=cores[empresa], width=2),
+            fillcolor=cores_fill[empresa]
+        ))
+        
+        traces_adicionados += 1
+    
+    # Se não há dados, mostrar mensagem
+    if traces_adicionados == 0:
         fig.add_annotation(
             text="Sem dados disponíveis para os filtros selecionados",
             xref="paper", yref="paper", x=0.5, y=0.5,
             showarrow=False, font_size=16
         )
+        fig.update_layout(
+            height=930,
+            margin=dict(l=60, r=60, t=80, b=60),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
         return fig
     
-    # Obter valores padronizados
-    valores_padronizados = obter_valores_padronizados(df_filtrado, sufixo)
-    indicadores = ["Custo", "Produção", "NPS", "Caixa", "Orçamento", "Receita"]
-    
-    # Criar gráfico radar
-    fig = go.Figure()
-    
-    # Fecha o polígono repetindo o primeiro ponto no final
-    valores_padronizados.append(valores_padronizados[0])
-    indicadores.append(indicadores[0])
-
-    fig.add_trace(go.Scatterpolar(
-        r=valores_padronizados,
-        theta=indicadores,
-        fill='toself',
-        name='Indicadores Normalizados',
-        line=dict(color='rgba(31, 119, 180, 0.8)', width=2),
-        fillcolor='rgba(31, 119, 180, 0.3)'
-    ))
     # Layout otimizado
     fig.update_layout(
         polar=dict(
@@ -77,19 +105,214 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
                 direction='clockwise'
             )
         ),
-        height=700,
+        height=977,
         margin=dict(l=60, r=60, t=80, b=60),
         title=dict(
-            text=f"Radar de Indicadores - {agrupamento_opcao}",
-            x=0.5,
+            text=f"Radar de Indicadores - {agrupamento_opcao}<br><sub>     🔵 SEST vs 🟠 SENAT</sub>",
+            x=0.7,
             font=dict(size=16, color='#2c3e50')
         ),
-        showlegend=False,
+        #showlegend=True,
+        
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
+
+
+def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
+    """Cards com valores padronizados - SEST vs SENAT"""
+    
+    # Mapeamento
+    coluna_periodo = {
+        "Mês": "competencia",
+        "Trimestre": "trimestre",
+        "Semestre": "ano_semestre",
+        "Ano": "ano"
+    }[agrupamento_opcao]
+    
+    sufixo = {
+        "Mês": "_mensal",
+        "Trimestre": "_trimestral", 
+        "Semestre": "_semestral",
+        "Ano": "_anual"
+    }[agrupamento_opcao]
+    
+    # Configuração dos indicadores
+    indicadores_config = [
+        ("custo", "💸 Custo", "custo"),
+        ("producao", "🥼 Produção", "producao"),
+        ("nps", "🌟 NPS", "nps"),
+        ("caixa", "💰 Caixa", "caixa"),        
+        ("orcamento", "📊 Orçamento", "orcamento"),
+        ("receita", "📈 Receita", "receita")
+    ]
+    
+    # Título
+    st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div style='
+            background-color: #003049;
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 20px;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+        '>
+            🧾 Indicadores por Período ({agrupamento_opcao})<br>
+            <i>{unidade_sel}</i>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"""
+        <div style='
+            background-color: #003049;
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 20px;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+        '>                     
+            <i> 📘 SEST x 📙 SENAT </i>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Processar dados para ambas as empresas
+    empresas = ['SEST', 'SENAT']
+    dados_empresas = {}
+    
+    for empresa in empresas:
+        # Filtrar dados para esta empresa
+        df_filtrado = df[df["empresa"] == empresa]
+        
+        if unidade_sel != "Todas":
+            df_filtrado = df_filtrado[df_filtrado["unidade"] == unidade_sel]
+        
+        df_filtrado = df_filtrado[df_filtrado[coluna_periodo] == competencia_sel]
+        
+        if not df_filtrado.empty:
+            # Calcular valores agregados por período
+            valores_agregados = calcular_valores_periodo(df_filtrado)
+            
+            # Pegar valores padronizados
+            if len(df_filtrado) == 1:
+                row = df_filtrado.iloc[0]
+            else:
+                # Para múltiplas linhas, fazer média dos valores padronizados
+                colunas_padronizadas = [
+                    f"nota_custo{sufixo}_padronizada",
+                    f"nota_producao{sufixo}_padronizada",
+                    f"nota_nps{sufixo}_padronizada",
+                    f"nota_caixa{sufixo}_padronizada", 
+                    f"nota_orcamento{sufixo}_padronizada",
+                    f"nota_receita{sufixo}_padronizada"
+                ]
+                colunas_existentes = [col for col in colunas_padronizadas if col in df_filtrado.columns]
+                if colunas_existentes:
+                    row = df_filtrado[colunas_existentes].mean()
+                else:
+                    row = df_filtrado.iloc[0]  # fallback
+            
+            dados_empresas[empresa] = {
+                'row': row,
+                'valores_agregados': valores_agregados
+            }
+        else:
+            # Dados vazios se não encontrar
+            dados_empresas[empresa] = {
+                'row': pd.Series(),
+                'valores_agregados': {key: 0 for key in ["custo", "orcamento", "caixa", "nps", "producao", "receita"]}
+            }
+    
+    # Exibir cards para cada indicador
+    for nome_base, nome_display, chave_agregado in indicadores_config:
+        
+        # Cards lado a lado - SEST vs SENAT
+        col1, col2 = st.columns(2)
+        
+        # Card SEST (azul)
+        with col1:
+            if 'SEST' in dados_empresas:
+                dados_sest = dados_empresas['SEST']
+                col_padronizada = f"nota_{nome_base}{sufixo}_padronizada"
+                valor_padronizado = dados_sest['row'].get(col_padronizada, 0)
+                if pd.isna(valor_padronizado):
+                    valor_padronizado = 0
+                valor_agregado = dados_sest['valores_agregados'].get(chave_agregado, 0)
+            else:
+                valor_padronizado = 0
+                valor_agregado = 0
+            
+            st.markdown(f"""
+                <div style="
+                    background-color: #669bbc;
+                    color: white;
+                    border-radius: 10px;
+                    padding: 15px;
+                    text-align: center;
+                    margin-bottom: 10px;
+                    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+                    font-weight: bold;
+                ">
+                    <div style="font-size: 21px; margin-bottom: 8px;">                        
+                    </div>
+                    <div style="font-size: 21px; margin-bottom: 8px; color: #ddd;">
+                        {nome_display} 
+                    </div>
+                    <div style="font-size: 15px; font-weight: bold;">
+                        Normalizado: {valor_padronizado:.2f} <br>
+                        Executado: {valor_agregado:.2f}%
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # Card SENAT (laranja)
+        with col2:
+            if 'SENAT' in dados_empresas:
+                dados_senat = dados_empresas['SENAT']
+                col_padronizada = f"nota_{nome_base}{sufixo}_padronizada"
+                valor_padronizado = dados_senat['row'].get(col_padronizada, 0)
+                if pd.isna(valor_padronizado):
+                    valor_padronizado = 0
+                valor_agregado = dados_senat['valores_agregados'].get(chave_agregado, 0)
+            else:
+                valor_padronizado = 0
+                valor_agregado = 0
+            
+            st.markdown(f"""
+                <div style="
+                    background-color: #fdf0d5;
+                    color: black;
+                    border-radius: 10px;
+                    padding: 15px;
+                    text-align: center;
+                    margin-bottom: 10px;
+                    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+                    font-weight: bold;
+                ">
+                    <div style="font-size: 21px; margin-bottom: 8px;">                        
+                    </div>
+                    <div style="font-size: 21px; margin-bottom: 8px; color: #333;">
+                        {nome_display} 
+                    </div>
+                    <div style="font-size: 15px; font-weight: bold;">
+                        Normalizado: {valor_padronizado:.2f} <br>
+                        Executado: {valor_agregado:.2f}%
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
 
 def obter_valores_originais(df_filtrado):
@@ -174,7 +397,6 @@ def obter_valores_padronizados(df_filtrado, sufixo):
     colunas_existentes = [col for col in colunas_ordem if col in df_filtrado.columns]
     
     if not colunas_existentes:
-        print(f"⚠️ Nenhuma coluna padronizada encontrada para sufixo {sufixo}")
         return [0, 0, 0, 0, 0, 0]
     
     # Obter valores (média se múltiplas linhas)
@@ -223,7 +445,7 @@ def calcular_valores_periodo(df_filtrado):
     orcamento = (despesa_liquidada / despesa_prevista * 100) if despesa_prevista > 0 else 0
     caixa = (receitas / despesas * 100) if despesas > 0 else 0
     producao = nota_producao
-    nps= nota_nps
+    nps = nota_nps
     receita = (receita_realizada / receita_prevista * 100) if receita_prevista > 0 else 0
     
     return {
@@ -235,147 +457,7 @@ def calcular_valores_periodo(df_filtrado):
         "receita": receita
     }
 
-def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
-    """Cards com valores padronizados (Coluna 1) e calculados por período (Coluna 2)"""
-    
-    # Mapeamento
-    coluna_periodo = {
-        "Mês": "competencia",
-        "Trimestre": "trimestre",
-        "Semestre": "ano_semestre",
-        "Ano": "ano"
-    }[agrupamento_opcao]
-    
-    sufixo = {
-        "Mês": "_mensal",
-        "Trimestre": "_trimestral", 
-        "Semestre": "_semestral",
-        "Ano": "_anual"
-    }[agrupamento_opcao]
-    
-    # Filtrar dados
-    df_filtrado = df[df["empresa"] == empresa_sel]
-    
-    if unidade_sel != "Todas":
-        df_filtrado = df_filtrado[df_filtrado["unidade"] == unidade_sel]
-    
-    df_filtrado = df_filtrado[df_filtrado[coluna_periodo] == competencia_sel]
-    
-    if df_filtrado.empty:
-        st.warning("Sem dados disponíveis para os filtros selecionados.")
-        return
-    
-    # Calcular valores agregados por período (Coluna 2)
-    valores_agregados = calcular_valores_periodo(df_filtrado)
-    
-    # Pegar valores padronizados (Coluna 1)
-    if len(df_filtrado) == 1:
-        row = df_filtrado.iloc[0]
-    else:
-        # Para múltiplas linhas, fazer média dos valores padronizados
-        colunas_padronizadas = [
-            f"nota_custo{sufixo}_padronizada",
-            f"nota_producao{sufixo}_padronizada",
-            f"nota_nps{sufixo}_padronizada",
-            f"nota_caixa{sufixo}_padronizada", 
-            f"nota_orcamento{sufixo}_padronizada",
-            f"nota_receita{sufixo}_padronizada"
-        ]
-        colunas_existentes = [col for col in colunas_padronizadas if col in df_filtrado.columns]
-        if colunas_existentes:
-            row = df_filtrado[colunas_existentes].mean()
-        else:
-            row = df_filtrado.iloc[0]  # fallback
-    
-    # Configuração dos indicadores
-    indicadores_config = [
-        ("custo", "💸 Custo", "custo"),
-        ("producao", "🥼 Produção", "producao"),
-        ("nps", "🌟 NPS", "nps"),
-        ("caixa", "💰 Caixa", "caixa"),        
-        ("orcamento", "📊 Orçamento", "orcamento"),
-        ("receita", "📈 Receita", "receita")
-    ]
-    
-    # Título
-    st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
-    st.markdown(
-        f"""
-        <div style='
-            background-color: #3f4f6b;
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 20px;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-        '>
-            📊 Indicadores por Período ({agrupamento_opcao})
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    # Exibir cards
-    for nome_base, nome_display, chave_agregado in indicadores_config:
-        
-        # Coluna 1: Valor padronizado
-        col_padronizada = f"nota_{nome_base}{sufixo}_padronizada"
-        valor_padronizado = row.get(col_padronizada, 0)
-        if pd.isna(valor_padronizado):
-            valor_padronizado = 0
-        
-        # Coluna 2: Valor calculado agregado
-        valor_agregado = valores_agregados.get(chave_agregado, 0)
-        
-        # Cards lado a lado
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown(f"""
-                <div style="
-                    background-color: #3f4f6b;
-                    color: white;
-                    border-radius: 10px;
-                    padding: 15px;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-                    font-weight: bold;
-                ">
-                    <div style="font-size: 16px; margin-bottom: 8px;">
-                        {nome_display} - Normalizado
-                    </div>
-                    <div style="font-size: 24px; font-weight: bold;">
-                        {valor_padronizado:.2f}
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-                <div style="
-                    background-color: rgba(0,0,0,0.4);
-                    color: white;
-                    border-radius: 10px;
-                    padding: 15px;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-                    font-weight: bold;
-                ">
-                    <div style="font-size: 16px; margin-bottom: 8px;">
-                        {nome_display} - Executado
-                    </div>
-                    <div style="font-size: 24px; font-weight: bold;">
-                        {valor_agregado:.2f}%
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
 
-# Função para debug/verificação
 def debug_colunas_disponiveis(df):
     """Mostra colunas disponíveis para debug"""
     colunas_relevantes = [

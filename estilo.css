@@ -596,3 +596,39 @@ button, [role="button"], input, select {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--glass-white);
 }
+
+/* === Overrides para manter o toggle da sidebar visível === */
+
+/* Não esconda o header (onde fica o botão de abrir/fechar a sidebar) */
+#MainMenu, footer { visibility: hidden !important; }
+header, [data-testid="stHeader"] {
+  visibility: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  height: auto !important;
+  z-index: 9998 !important;
+}
+
+/* Garante que o botão de colapsar/expandir apareça e clicável */
+[data-testid="stSidebarCollapsedControl"] {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 9999 !important;   /* acima de qualquer card/flutuante */
+}
+
+/* Evita que algo cubra a borda esquerda (área do toggle) */
+.stApp, .stApp > div:first-child {
+  overflow: visible !important;
+}
+
+/* Sidebar ok, mas sem sobrepor header/toggle */
+section[data-testid="stSidebar"] {
+  z-index: 10 !important;     /* menor que o header/toggle */
+}
+
+/* (opcional) cursor padrão só não nos botões, inputs etc. */
+* { cursor: default; }
+button, [role="button"], input, select, [data-testid="stSidebarCollapsedControl"] {
+  cursor: pointer !important;
+}

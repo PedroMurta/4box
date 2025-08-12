@@ -17,7 +17,7 @@ from radar import grafico_radar_notas, exibir_cards_radar
 st.set_page_config(
     layout="wide",
     page_title="Painel 4Box",
-    #initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded",
     page_icon="icone_ss.png"
 )
 
