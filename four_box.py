@@ -40,10 +40,10 @@ def colorir_nota_otimizado(valor):
     
     cor_map = {
         (lambda x: x < 0.3): "#e64937",
-        (lambda x: x < 0.5): "#ce5656", 
-        (lambda x: x < 0.6): "#928D49",
-        (lambda x: x < 0.8): "#45cf30",
-        (lambda x: x < 1.2): "#1071d2",
+        (lambda x: x < 0.5): "#e06666", 
+        (lambda x: x < 0.75): "#d6d304", 
+        (lambda x: x < 0.9): "#2cd147",
+        (lambda x: x < 1): "#1071d2",
         (lambda x: True): "#0066cc"  # default
     }
     
@@ -86,7 +86,7 @@ def preparar_dados_hover(df, colunas_x, colunas_y, nome_map):
     
     return df, custom_cols
 
-def criar_template_hover(colunas_x, colunas_y, nome_map, font_size=14):
+def criar_template_hover(colunas_x, colunas_y, nome_map, font_size=18):
     """Cria template de hover com tamanho de fonte ajustável"""
     base_template = (
         f"<span style='font-size:{font_size}px'>"
@@ -143,26 +143,38 @@ def grafico_fourbox(
     colunas_x_base, pesos_x, colunas_y_base, pesos_y, nome_map, filtro_col
 ):
     """Função principal otimizada para criar o gráfico 4Box"""
-    
+
     # Aplica sufixos corretos
     colunas_x = aplicar_sufixos_colunas(colunas_x_base, filtro_col)
     colunas_y = aplicar_sufixos_colunas(colunas_y_base, filtro_col)
-    
+
     # Filtro principal otimizado
     df_filtro = filtrar_dados_principal(df, empresa_sel, competencia_sel, coluna_periodo)
-    
+
     if df_filtro.empty:
         return px.scatter(title="Sem dados disponíveis")
-    
+
     # Preparações iniciais
     df_filtro = calcular_eixos_vetorizado(df_filtro, colunas_x, pesos_x, colunas_y, pesos_y)
     df_filtro["destaque"] = df_filtro["unidade"] == unidade_sel if unidade_sel != "Todas" else False
     df_filtro["idade_unidade"] = pd.to_numeric(df_filtro.get("idade_unidade", 10), errors="coerce").fillna(10)
-    
+
     # Prepara dados de hover
     df_filtro, custom_cols = preparar_dados_hover(df_filtro, colunas_x, colunas_y, nome_map)
-    
-    # Cria gráfico base
+
+    # Nomes legíveis para rodapé
+    nomes_legiveis = {
+        'nota_orcamento_anual_padronizada': 'Orçamento',
+        'nota_caixa_anual_padronizada': 'Caixa',
+        'nota_nps_anual_padronizada': 'NPS',
+        'nota_receita_anual_padronizada': 'Receita',
+        'nota_custo_anual_padronizada': 'Custo',
+        'nota_producao_anual_padronizada': 'Produção'
+    }
+    texto_eixo_x = ", ".join([f"{nomes_legiveis.get(v, v)} " for v, p in zip(colunas_x, pesos_x)])
+    texto_eixo_y = ", ".join([f"{nomes_legiveis.get(v, v)} " for v, p in zip(colunas_y, pesos_y)])
+
+    # Gráfico
     fig = px.scatter(
         df_filtro,
         x="eixo_x", y="eixo_y",
@@ -171,53 +183,61 @@ def grafico_fourbox(
         size_max=30,
         hover_name="unidade",
         custom_data=custom_cols,
-        labels={"eixo_x": "Operação", "eixo_y": "Estratégia"},
+        labels={"eixo_x": f"Operação - ({texto_eixo_x})", "eixo_y": f"Estratégia - ({texto_eixo_y})"},
         color_discrete_map=CORES_TIPOLOGIA,
         category_orders={"tipologia": sorted(df_filtro["tipologia"].dropna().unique())},
         title=f"Gráfico 4Box – {empresa_sel} ({coluna_periodo}: {competencia_sel})"
     )
-    
-    # Atualiza hover template
+
+    # Template de hover
     hover_template = criar_template_hover(colunas_x, colunas_y, nome_map)
     fig.update_traces(
         hovertemplate=hover_template,
         marker=dict(
-            line=dict(width=1, color='rgba(0,0,0,0.6)'),
+            line=dict(width=2, color='rgba(11, 63, 66, 0.3)'),
             opacity=0.8
         )
     )
-    
-    # Adiciona elementos visuais
+
+    # Adiciona quadrantes e bordas
     adicionar_quadrantes(fig)
     adicionar_bordas(fig)
-    
-    # Configuração final do layout
-    fig.update_layout(
-    height=900, width=900,
-    paper_bgcolor='ghostwhite', plot_bgcolor='ghostwhite',
-    xaxis=dict(range=[0, 1], tickvals=[], showticklabels=False),
-    yaxis=dict(range=[0, 1], tickvals=[], showticklabels=False),
-    legend=dict(
-        title="Tipologia",
-        x=-0.02,         # mais à esquerda
-        y=1.0,
-        xanchor='right', # ancoragem à direita
-        bgcolor='rgba(0,0,0,0)',  # fundo transparente (opcional)
-    ),
-    showlegend=True,
-    margin=dict(t=70, b=70, l=70, r=70),
-)
 
-    
-    # Anotação explicativa otimizada
-    texto_eixo_x = ", ".join([f"{nome_map.get(v, v)} (peso {p})" for v, p in zip(colunas_x, pesos_x)])
-    texto_eixo_y = ", ".join([f"{nome_map.get(v, v)} (peso {p})" for v, p in zip(colunas_y, pesos_y)])
-    
+    # Layout
+    fig.update_layout(
+        height=900, width=900,
+        paper_bgcolor='#F3F3F3', plot_bgcolor='#F3F3F3',
+        xaxis=dict(
+            range=[0, 1],
+            tickvals=[],
+            showticklabels=False,
+            title_font=dict(size=16)
+        ),
+        yaxis=dict(
+            range=[0, 1],
+            tickvals=[],
+            showticklabels=False,
+            title_font=dict(size=16)
+        ),
+        legend=dict(
+            title="Tipologia",
+            title_font=dict(size=14),
+            font=dict(size=14),
+            x=-0.02,
+            y=1.0,
+            xanchor='right',
+            bgcolor='rgba(0,0,0,0)'
+        ),
+        showlegend=True,
+        margin=dict(t=70, b=70, l=70, r=70)
+    )
+
+    # Rodapé explicativo
     fig.add_annotation(
         text=f"<b>Eixo X:</b> {texto_eixo_x}<br><b>Eixo Y:</b> {texto_eixo_y}",
         xref="paper", yref="paper", x=0, y=-0.25,
         showarrow=False, align="left",
-        font=dict(size=12, color="gray")
+        font=dict(size=18, color="gray")
     )
-    
+
     return fig

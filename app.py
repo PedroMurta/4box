@@ -91,8 +91,8 @@ ABAS_CONFIG = {
     "icons": ["bar-chart", "activity"],
     "styles": {
         "container": {"padding": "0!important", "background-color": "#fafafa"},
-        "icon": {"color": "#b7bc75", "font-size": "18px"},
-        "nav-link": {"font-size": "12px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
+        "icon": {"color": "#b7bc75", "font-size": "22px"},
+        "nav-link": {"font-size": "20px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
         "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
     }
 }
