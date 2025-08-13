@@ -163,9 +163,32 @@ def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel,
 
         #### 💡 Cor das Bolhas
         > Indica a Tipologia de cada Unidade.
+                    
         """)
+    modebar_to_add = [
+        'toggleSpikelines',        # Toggle Spike Lines
+        'hoverClosestCartesian',   # Show closest data on hover
+        'hoverCompareCartesian',   # Compare data on hover
+        'drawline',                # Draw line
+        'drawopenpath',            # Draw open path
+        'drawclosedpath',          # Draw closed path (polygon)
+        'drawrect',                # Draw rectangle
+        'drawcircle',              # Draw circle
+        'eraseshape'               # Erase active shape
+    ]
+
+    plotly_config = {
+        "displaylogo": False,
+        "modeBarButtonsToAdd": modebar_to_add,
+        "toImageButtonOptions": {
+            "format": "png",
+            "filename": "grafico_4box",
+            "height": 900,
+            "width": 1200
+        }
+    }
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True,  config=plotly_config)
 
 def renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)

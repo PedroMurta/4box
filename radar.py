@@ -83,7 +83,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
             radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(size=12), tickformat=".2f"),
             angularaxis=dict(tickfont=dict(size=18), rotation=90, direction='clockwise'),
         ),
-        height=980,
+        height=935,
         margin=dict(l=60, r=60, t=80, b=60),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
@@ -138,16 +138,16 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
         <div style='
             background-color: rgba(0, 48, 124, 0.7);            
             color: white;
-            border-radius: 10px;
+            border-radius: 15px;
             padding: 15px;
             text-align: center;
             font-weight: bold;
             font-size: 18px;
-            margin-bottom: 20px;            
+            margin-bottom: 16px;            
         '>
             <p style='font-size: 25 px;'><b>INDICADORES POR PERÍODO ({agrupamento_opcao})</b></p>
             <i>{unidade_sel}</i> <br>
-            <i> 📘 SEST</i>    x     <i>📙 SENAT </i>
+           
         </div>
         """,
         unsafe_allow_html=True
