@@ -186,7 +186,7 @@ def grafico_fourbox(
         labels={"eixo_x": f"Operação - ({texto_eixo_x})", "eixo_y": f"Estratégia - ({texto_eixo_y})"},
         color_discrete_map=CORES_TIPOLOGIA,
         category_orders={"tipologia": sorted(df_filtro["tipologia"].dropna().unique())},
-        title=f"Gráfico 4Box – {empresa_sel} ({coluna_periodo}: {competencia_sel})"
+        title=f"Matriz Desempenho – {empresa_sel} ({coluna_periodo}: {competencia_sel})"
     )
 
     # Template de hover
