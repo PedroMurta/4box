@@ -87,7 +87,7 @@ COLUNA_PERIODO_MAP = {
 
 # Configuração de abas (constante)
 ABAS_CONFIG = {
-    "options": ["Painel 4Box", "Radar"],
+    "options": ["Matriz Desempenho", "Radar"],
     "icons": ["bar-chart", "activity"],
     "styles": {
         "container": {"padding": "0!important", "background-color": "#fafafa"},
@@ -118,7 +118,7 @@ def main():
     coluna_periodo = COLUNA_PERIODO_MAP[agrupamento_opcao]
     
     # 6. RENDERIZAÇÃO DAS ABAS
-    if aba_selecionada == "Painel 4Box":
+    if aba_selecionada == "Matriz Desempenho":
         renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel, 
                            coluna_periodo, variaveis_x, pesos_x, variaveis_y, 
                            pesos_y, nome_map, filtro_col)

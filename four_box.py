@@ -165,7 +165,7 @@ def grafico_fourbox(
     # Nomes legíveis para rodapé
     nomes_legiveis = {
         'nota_orcamento_anual_padronizada': 'Orçamento',
-        'nota_caixa_anual_padronizada': 'Caixa',
+        'nota_caixa_anual_padronizada': 'Equilíbrio Financeiro',
         'nota_nps_anual_padronizada': 'NPS',
         'nota_receita_anual_padronizada': 'Receita',
         'nota_custo_anual_padronizada': 'Custo',

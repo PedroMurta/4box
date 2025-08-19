@@ -5,7 +5,7 @@ import pandas as pd
 # Constantes globais
 # ==============================
 PESO_OPTIONS = [(str(i), i) for i in range(1, 6)]
-PESO_DEFAULT = {"Orçamento": 1, "Caixa": 1, "Capacidade Produtiva": 1, "Receita": 1, "Custo": 1, "Produção": 1, "NPS": 1}
+PESO_DEFAULT = {"Orçamento": 1, "Equilíbrio Financeiro": 1, "Capacidade Produtiva": 1, "Receita": 1, "Custo": 1, "Produção": 1, "NPS": 1}
 
 SUFIXO_MAP = {
     "competencia": "_mensal_padronizada",
@@ -16,7 +16,7 @@ SUFIXO_MAP = {
 
 BASE_LABELS = {
     "nota_orcamento": "Orçamento",
-    "nota_caixa": "Caixa",
+    "nota_caixa": "Equilíbrio Financeiro",
     "nota_capacidade_produtiva": "Capacidade Produtiva",
     "nota_receita": "Receita",
     "nota_custo": "Custo",

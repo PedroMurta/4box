@@ -30,7 +30,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
     cores_fill  = {"SEST": "rgba(31,119,180,0.30)", "SENAT": "rgba(255,127,14,0.30)"}
 
     # Ordem dos eixos
-    indicadores = ["💸 Custo", "🥼 Produção", "🌟 NPS", "💰 Caixa", "📊 Orçamento", "📈 Receita"]
+    indicadores = ["💸 Custo", "🥼 Produção", "🌟 NPS", "💰 Equilíbrio Financeiro", "📊 Orçamento", "📈 Receita"]
     empresas = ["SEST", "SENAT"]
 
     fig = go.Figure()
@@ -126,7 +126,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
         ("custo", "💸 Custo", "custo"),
         ("producao", "🥼 Produção", "producao"),
         ("nps", "🌟 NPS", "nps"),
-        ("caixa", "💰 Caixa", "caixa"),        
+        ("caixa", "💰 Equilíbrio Financeiro", "caixa"),        
         ("orcamento", "📊 Orçamento", "orcamento"),
         ("receita", "📈 Receita", "receita")
     ]
