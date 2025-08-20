@@ -17,11 +17,11 @@ SUFIXO_MAP = {
 BASE_LABELS = {
     "nota_orcamento": "Orçamento",
     "nota_caixa": "Equilíbrio Financeiro",
-    "nota_capacidade_produtiva": "Capacidade Produtiva",
+    "nota_nps": "NPS",    
     "nota_receita": "Receita",
     "nota_custo": "Custo",
     "nota_producao": "Produção",
-    "nota_nps": "NPS",
+    "nota_capacidade_produtiva": "Capacidade Produtiva",
 }
 
 FILTRO_COL_MAP = {"Mês": "competencia", "Semestre": "ano_semestre", "Ano": "ano", "Trimestre": "trimestre"}

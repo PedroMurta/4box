@@ -118,7 +118,7 @@ def adicionar_quadrantes(fig):
         fig.add_annotation(
             x=(x0 + x1) / 2, y=(y0 + y1) / 2,
             text=f"<b>{nome}</b>", showarrow=False,
-            font=dict(size=14, color="black"),
+            font=dict(size=19, color="black"),
             xanchor="center", yanchor="middle"
         )
 
@@ -162,17 +162,28 @@ def grafico_fourbox(
     # Prepara dados de hover
     df_filtro, custom_cols = preparar_dados_hover(df_filtro, colunas_x, colunas_y, nome_map)
 
-    # Nomes legíveis para rodapé
-    nomes_legiveis = {
-        'nota_orcamento_anual_padronizada': 'Orçamento',
-        'nota_caixa_anual_padronizada': 'Equilíbrio Financeiro',
-        'nota_nps_anual_padronizada': 'NPS',
-        'nota_receita_anual_padronizada': 'Receita',
-        'nota_custo_anual_padronizada': 'Custo',
-        'nota_producao_anual_padronizada': 'Produção'
+    
+    # Nomes legíveis para rodapé (geração automática)
+    BASE_LABELS = {
+        'nota_orcamento': 'Orçamento',
+        'nota_caixa': 'Equilíbrio Financeiro',
+        'nota_nps': 'NPS',
+        'nota_receita': 'Receita',
+        'nota_custo': 'Custo',
+        'nota_producao': 'Produção',
     }
-    texto_eixo_x = ", ".join([f"{nomes_legiveis.get(v, v)} " for v, p in zip(colunas_x, pesos_x)])
-    texto_eixo_y = ", ".join([f"{nomes_legiveis.get(v, v)} " for v, p in zip(colunas_y, pesos_y)])
+
+    nomes_legiveis = {}
+    for base, label in BASE_LABELS.items():
+        for suf in ("", "_anual", "_trimestral", "_semestral", "_mensal"):
+            nomes_legiveis[f"{base}{suf}"] = label
+            if suf:  # também cobre *_padronizada
+                nomes_legiveis[f"{base}{suf}_padronizada"] = label
+
+    # Rodapé
+    texto_eixo_x = ", ".join(nomes_legiveis.get(v, v) for v, p in zip(colunas_x, pesos_x))
+    texto_eixo_y = ", ".join(nomes_legiveis.get(v, v) for v, p in zip(colunas_y, pesos_y))
+
 
     # Gráfico
     fig = px.scatter(

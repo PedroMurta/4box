@@ -16,7 +16,7 @@ from radar import grafico_radar_notas, exibir_cards_radar
 # 2. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(
     layout="wide",
-    page_title="Painel 4Box",
+    page_title="Matriz Desempenho",
     initial_sidebar_state="expanded",
     page_icon="icone_ss.png"
 )
