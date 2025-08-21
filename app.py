@@ -74,28 +74,28 @@ COLUNA_PERIODO_MAP = {
 }
 
 # Configuração de abas (constante)
-#ABAS_CONFIG = {
-#    "options": ["Painel 4Box", "Radar", "Atendimentos", "Orçamento/Receita", "Custo", "Caixa"],
-#    "icons": ["bar-chart", "activity", "clock", "box", "graph-up", "credit-card"],
-#    "styles": {
-#        "container": {"padding": "0!important", "background-color": "#fafafa"},
-#        "icon": {"color": "#b7bc75", "font-size": "18px"},
-#        "nav-link": {"font-size": "12px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
-#        "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
-#    }
-#}
-
-# Configuração de abas (constante)
 ABAS_CONFIG = {
-    "options": ["Matriz Desempenho", "Radar"],
-    "icons": ["bar-chart", "activity"],
+    "options": ["Matriz Desempenho", "Radar", "Atendimentos", "Orçamento/Receita", "Custo", "Equilíbrio Financeiro"],
+    "icons": ["bar-chart", "activity", "clock", "box", "graph-up", "credit-card"],
     "styles": {
         "container": {"padding": "0!important", "background-color": "#fafafa"},
-        "icon": {"color": "#b7bc75", "font-size": "22px"},
-        "nav-link": {"font-size": "20px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
+        "icon": {"color": "#b7bc75", "font-size": "18px"},
+        "nav-link": {"font-size": "12px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
         "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
     }
 }
+
+# Configuração de abas (constante)
+#ABAS_CONFIG = {
+#    "options": ["Matriz Desempenho", "Radar"],
+#    "icons": ["bar-chart", "activity"],
+#    "styles": {
+#        "container": {"padding": "0!important", "background-color": "#fafafa"},
+#        "icon": {"color": "#b7bc75", "font-size": "22px"},
+#        "nav-link": {"font-size": "20px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
+#        "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
+#    }
+#}
 
 def main():
     # Carregamento único dos dados
@@ -123,24 +123,24 @@ def main():
                            coluna_periodo, variaveis_x, pesos_x, variaveis_y, 
                            pesos_y, nome_map, filtro_col)
     
-    #elif aba_selecionada == "Atendimentos":
-    #    renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, 
-    #                               coluna_periodo)
+    elif aba_selecionada == "Atendimentos":
+        renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, 
+                                   coluna_periodo)
     
-    #elif aba_selecionada == "Custo":
-    #    renderizar_aba_custo(df, empresa_sel, unidade_sel, competencia_sel)
+    elif aba_selecionada == "Custo":
+        renderizar_aba_custo(df, empresa_sel, unidade_sel, competencia_sel)
     
-    #elif aba_selecionada == "Orçamento/Receita":
-    #    renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, 
-    #                           coluna_periodo)
+    elif aba_selecionada == "Orçamento/Receita":
+        renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, 
+                               coluna_periodo)
     
     elif aba_selecionada == "Radar":
         renderizar_aba_radar(df, empresa_sel, unidade_sel, competencia_sel, 
                             agrupamento_opcao)
     
-    #elif aba_selecionada == "Caixa":
-    #    renderizar_aba_caixa(df, empresa_sel, unidade_sel, competencia_sel, 
-    #                        coluna_periodo)
+    elif aba_selecionada == "Equilíbrio Financeiro":
+        renderizar_aba_caixa(df, empresa_sel, unidade_sel, competencia_sel, 
+                            coluna_periodo)
 
 # Funções de renderização (separadas para melhor organização)
 def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel, 
@@ -152,19 +152,41 @@ def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel,
         nome_map, filtro_col
     )
     
-    with st.expander("ℹ️ Ver interpretação estratégica dos quadrantes"):
+    with st.expander("ℹ️ Ver interpretação estratégica da Matriz Desempenho"):
         st.markdown("""
-        ### 📊 Interpretação dos Quadrantes
-        > **Eixo X**: esforço, recurso, insumo ou execução operacional.  
-        > **Eixo Y**: retorno, entrega, desempenho ou resultado estratégico.
+        ## 💨 Interpretação dos Quadrantes
+        ### Indicadores Primários
+        > **Eixo X (Operação)** Orçamento, Equilíbrio Financeiro e NPS(Net Promoter Score). Normalizados de 0 a 1.   
+        > **Eixo Y (Estratégia)**: Receita, Custo e Produção. Normalizados de 0 a 1.
 
-        #### ⭐ Tamanho das Bolhas
-        > Idade da unidade. Quanto maior a bolha, maior a data de inauguração.
-
-        #### 💡 Cor das Bolhas
-        > Indica a Tipologia de cada Unidade.
-                    
+        ### ⭐ Variáveis Adicionais
+        > **Tamanho das Bolhas** - Idade da Unidade. Bolhas maiores indicam unidades mais antigas, permitindo análises sobre maturidade e desempenho.       
+        > **Cor das Bolhas** - Indica a Tipologia de cada Unidade, facilitando a identificação de padrões de desempenho por tipo de operação.
+        
+        
+        #### 🔳🔲 Os quadrantes:
+        > **Inferior Esquerdo (Baixo X e Baixo Y):** Unidades com baixa 
+        performance operacional e estratégica. `Prioridade máxima 
+        para intervenção e suporte.`
+        
+        
+        > **Superior Direito (Alto X e Alto Y):** Unidades com alta 
+        performance operacional e estratégica. `Desempenho 
+        agregado favorável e possível referência para as demais.`
+        
+        
+        > **Superior Esquerdo (Baixo X e Alto Y):** Unidades com 
+        desempenho operacional baixo, mas estratégico alto. `Foco 
+        em otimização operacional para alavancar o potencial 
+        estratégico.`
+        
+        
+        > **Inferior Direito (Alto X e Baixo Y):** Unidades com 
+        desempenho operacional alto, mas estratégico baixo.
+        `Necessidade de reorientação estratégica para converter 
+        eficiência operacional em resultados de longo prazo.`
         """)
+        
     modebar_to_add = [
         'toggleSpikelines',        # Toggle Spike Lines
         'hoverClosestCartesian',   # Show closest data on hover
@@ -197,7 +219,8 @@ def renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, c
     with st.expander("ℹ️ Interpretação dos gráficos"):
         st.markdown("""
         ### Gráfico de linhas         
-        > Reflete a nota histórica de produção da UO por competência.
+        > Reflete a índice/nota histórica de produção da UO por competência.
+                    
         #### Gráfico de Donuts
         > Especialidade -> Executado -> meta.
         """)
@@ -214,9 +237,13 @@ def renderizar_aba_custo(df, empresa_sel, unidade_sel, competencia_sel):
         st.markdown("""
         ### 📊 Interpretação
         > **Meta do Custo**: Valor definido para execução do custo.
+                    
         > **Realizado**: Valor Real executado.
+                    
         > **Coluna Azul**: Valor da meta.
+                    
         > **Coluna Vermelha**: Valor executado superior à meta.
+                    
         > **Coluna Verde**: Valor executado melhor que a meta.
         """)
     
@@ -231,6 +258,7 @@ def renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, colu
         st.markdown("""
         ### 📊 Descrição:
         > **Execução das Receitas**: Receita Realizada sobre a Prevista.
+                    
         > **Execução Orçamentária**: Despesa Liquidada sobre a Prevista.
         """)
     
