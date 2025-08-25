@@ -14,7 +14,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 # Cliente httpx ignorando certificados SSL (para ambientes com self-signed cert)
 http_client = httpx.Client(verify=False)
 
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = 
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 
