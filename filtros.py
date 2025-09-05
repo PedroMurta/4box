@@ -5,7 +5,7 @@ import pandas as pd
 # Constantes globais
 # ==============================
 PESO_OPTIONS = [(str(i), i) for i in range(1, 6)]
-PESO_DEFAULT = {"Orçamento": 1, "Equilíbrio Financeiro": 1, "Capacidade Produtiva": 1, "Receita": 1, "Custo": 1, "Produção": 1, "NPS": 1}
+PESO_DEFAULT = {"Orçamento": 1, "Equilíbrio Financeiro": 1, "Capacidade Produtiva": 1, "Receita Operacional": 1, "Custo": 1, "Produção": 1, "NPS": 1}
 
 SUFIXO_MAP = {
     "competencia": "_mensal_padronizada",
@@ -17,16 +17,18 @@ SUFIXO_MAP = {
 BASE_LABELS = {
     "nota_orcamento": "Orçamento",
     "nota_caixa": "Equilíbrio Financeiro",
-    "nota_nps": "NPS",    
-    "nota_receita": "Receita",
+    "nota_nps": "NPS",
+    "nota_receita_operacional": "Receita Operacional",
     "nota_custo": "Custo",
-    "nota_producao": "Produção",
+    "nota_producao": "Produção",    
     "nota_capacidade_produtiva": "Capacidade Produtiva",
 }
 
 FILTRO_COL_MAP = {"Mês": "competencia", "Semestre": "ano_semestre", "Ano": "ano", "Trimestre": "trimestre"}
 
 VALORES_PADRAO = {"competencia": "2024-01", "ano_semestre": "2024-1", "ano": "2024", "trimestre": "2024-1"}
+
+CONSELHO_PADRAO = "CRES"
 
 # ==============================
 # Utilitários
@@ -143,7 +145,15 @@ def sidebar_filtros(df):
 
         # Filtros avançados
         with st.popover("🎛️ Filtros Avançados"):
-            conselho_sel = st.selectbox("Conselho:", ["Todos"] + sorted(df_empresa["conselho"].dropna().unique()))
+            # Aplicar CRES como padrão para Conselho
+            conselhos_disponiveis = ["Todos"] + sorted(df_empresa["conselho"].dropna().unique())
+            # Verificar se CRES existe na lista, senão usar "Todos"
+            if CONSELHO_PADRAO in conselhos_disponiveis:
+                idx_conselho = conselhos_disponiveis.index(CONSELHO_PADRAO)
+            else:
+                idx_conselho = 0  # "Todos" como fallback
+            
+            conselho_sel = st.selectbox("Conselho:", conselhos_disponiveis, index=idx_conselho)
             unidade_sel = st.selectbox("Unidade:", ["Todas"] + sorted(df_empresa["unidade"].dropna().unique()))
             tipologia_sel = st.selectbox("Tipologia:", ["Todas"] + sorted(df_empresa["tipologia"].dropna().unique()))
 
@@ -160,7 +170,7 @@ def sidebar_filtros(df):
                     colunas_x_base = st.multiselect(
                         "Indicadores do Eixo X",
                         options=colunas_base,
-                        default=["nota_orcamento", "nota_caixa", "nota_nps"],
+                        default=["nota_producao", "nota_custo", "nota_receita_operacional"],
                         format_func=lambda x: BASE_LABELS[x],
                         max_selections=3,
                         key="multiselect_x",
@@ -176,7 +186,7 @@ def sidebar_filtros(df):
                     colunas_y_base = st.multiselect(
                         "Indicadores do Eixo Y",
                         options=colunas_base,
-                        default=["nota_receita", "nota_custo", "nota_producao"],
+                        default=["nota_orcamento", "nota_caixa"],
                         format_func=lambda x: BASE_LABELS[x],
                         max_selections=3,
                         key="multiselect_y",
