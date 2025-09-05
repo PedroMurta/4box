@@ -4,18 +4,6 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 
-# ===== CONSTANTES GLOBAIS =====
-CORES_QUADRANTES_NINEBOX = {
-    "1": "#ec7063", "2": "#f1948a", "3": "#f5b7b1",
-    "4": "#f7dc6f", "5": "#fcf3cf", "6": "#f9e79f",
-    "7": "#82e0aa", "8": "#a9dfbf", "9": "#abebc6"
-}
-
-CORES_TIPOLOGIA = {
-    "A": "#0c64a3", "B": "#7E220D", "C": "#8fac1b",
-    "CN": "#109410", "D": "#7627d6", "DN": "#574b63"
-}
-
 CORES_PADROES = {
     "meta": "#81a4cd",
     "realizado_bom": "#588157",
@@ -25,14 +13,17 @@ CORES_PADROES = {
 }
 
 LAYOUT_CONFIG = {
-    "paper_bgcolor": 'ghostwhite',
-    "plot_bgcolor": 'ghostwhite',
+    "paper_bgcolor": '#F3F3F3',
+    "plot_bgcolor": '#F3F3F3',
     "margin": dict(t=50, b=50, l=50, r=50)
 }
+
 
 # ===== FUNÇÕES UTILITÁRIAS =====
 def filtrar_dados_base(df, empresa_sel, unidade_sel=None):
     """Filtragem básica otimizada"""
+   
+    
     mask = df["empresa"] == empresa_sel
     if unidade_sel and unidade_sel != "Todas":
         mask &= df["unidade"] == unidade_sel
@@ -48,7 +39,7 @@ def converter_colunas_numericas(df, colunas):
             ).fillna(0)
     return df
 
-def criar_card_html(titulo, valor, cor="#3f4f6b"):
+def criar_card_html(titulo, valor, cor="rgba(0, 48, 124, 0.7)"):
     """Cria HTML para cards padronizado"""
     return f"""
     <div style="border: 2px solid #ccc; border-radius: 12px; padding: 10px; margin: 5px;
@@ -58,151 +49,61 @@ def criar_card_html(titulo, valor, cor="#3f4f6b"):
     </div>
     """
 
-# ===== GRÁFICO NINEBOX OTIMIZADO =====
-@st.cache_data
-def calcular_dados_ninebox(df, empresa_sel, competencia_sel, coluna_periodo, colunas_x, pesos_x, colunas_y, pesos_y):
-    """Cálculos do NineBox com cache"""
-    df_filtro = df[
-        (df["empresa"] == empresa_sel) & 
-        (df[coluna_periodo] == competencia_sel)
-    ].copy()
-    
-    if df_filtro.empty:
-        return None
-    
-    # Cálculo vetorizado dos eixos
-    df_filtro["eixo_x"] = sum(df_filtro[var].fillna(0) * peso for var, peso in zip(colunas_x, pesos_x))
-    df_filtro["eixo_y"] = sum(df_filtro[var].fillna(0) * peso for var, peso in zip(colunas_y, pesos_y))
-    
-    # Tamanho das bolhas otimizado
-    if "idade_unidade" in df_filtro.columns:
-        idade = pd.to_numeric(df_filtro["idade_unidade"], errors="coerce").fillna(1)
-        df_filtro["tamanho"] = np.interp(idade, (idade.min(), idade.max()), (10, 50))
-    else:
-        df_filtro["tamanho"] = 15
-    
-    return df_filtro
-
-def grafico_ninebox(df, empresa_sel, competencia_sel, unidade_sel, coluna_periodo, 
-                   colunas_x, pesos_x, colunas_y, pesos_y, nome_map):
-    """Gráfico NineBox otimizado"""
-    
-    df_dados = calcular_dados_ninebox(df, empresa_sel, competencia_sel, coluna_periodo, 
-                                     colunas_x, pesos_x, colunas_y, pesos_y)
-    
-    if df_dados is None:
-        st.warning("Sem dados para os filtros selecionados.")
-        return px.scatter()
-    
-    df_dados["destaque"] = df_dados["unidade"] == unidade_sel if unidade_sel != "Todas" else False
-    
-    # Criação do gráfico
-    fig = px.scatter(
-        df_dados,
-        x="eixo_x", y="eixo_y",
-        color="tipologia",
-        size="tamanho",
-        size_max=45,
-        hover_name="unidade",
-        hover_data={var: ':.2f' for var in set(colunas_x + colunas_y)} | {"eixo_x": ':.2f', "eixo_y": ':.2f'},
-        labels={"eixo_x": "Operação", "eixo_y": "Estratégia"},
-        color_discrete_map=CORES_TIPOLOGIA,
-        title=f"Gráfico 9Box – {empresa_sel} ({competencia_sel})"
-    )
-    
-    # Adicionar quadrantes de forma otimizada
-    adicionar_quadrantes_ninebox(fig)
-    adicionar_bordas_ninebox(fig)
-    adicionar_labels_ninebox(fig)
-    
-    # Layout final
-    fig.update_layout(
-        height=900,
-        **LAYOUT_CONFIG,
-        xaxis=dict(range=[0, 15], tickvals=[], showticklabels=False),
-        yaxis=dict(range=[0, 15], tickvals=[], showticklabels=False),
-        legend_title="Tipologia",
-        showlegend=True
-    )
-    
-    # Anotação dos eixos
-    texto_eixos = criar_texto_eixos(colunas_x, pesos_x, colunas_y, pesos_y, nome_map)
-    fig.add_annotation(
-        text=texto_eixos,
-        xref="paper", yref="paper", x=0, y=-0.2,
-        showarrow=False, align="left",
-        font=dict(size=12, color="black")
-    )
-    
-    return fig
-
-def adicionar_quadrantes_ninebox(fig):
-    """Adiciona quadrantes do NineBox"""
-    for row, (y0, y1) in enumerate([(10, 15), (5, 10), (0, 5)]):
-        for col, (x0, x1) in enumerate([(0, 5), (5, 10), (10, 15)]):
-            numero = str((2 - row) + col * 3 + 1)
-            fig.add_shape(
-                type="rect", x0=x0, x1=x1, y0=y0, y1=y1,
-                fillcolor=CORES_QUADRANTES_NINEBOX.get(numero, "#ccc"), 
-                opacity=0.25, line=dict(width=0), layer="below"
-            )
-            fig.add_annotation(
-                x=(x0 + x1) / 2, y=(y0 + y1) / 2,
-                text=f"<b>{numero}</b>", showarrow=False,
-                font=dict(size=16), xanchor="center", yanchor="middle"
-            )
-
-def adicionar_bordas_ninebox(fig):
-    """Adiciona linhas de grade do NineBox"""
-    for pos in [0, 5, 10, 15]:
-        # Linhas verticais
-        fig.add_shape(type="line", x0=pos, x1=pos, y0=0, y1=15, 
-                     line=dict(color="black", width=1))
-        # Linhas horizontais  
-        fig.add_shape(type="line", x0=0, x1=15, y0=pos, y1=pos, 
-                     line=dict(color="black", width=1))
-
-def adicionar_labels_ninebox(fig):
-    """Adiciona labels dos eixos do NineBox"""
-    labels_y = [("Alta Estratégia", 13), ("Média Estratégia", 8), ("Baixa Estratégia", 3)]
-    labels_x = [("Baixa Eficiência", 3), ("Média Eficiência", 8), ("Alta Eficiência", 13)]
-    
-    for texto, pos in labels_y:
-        fig.add_annotation(text=texto, x=-0.3, y=pos, showarrow=False, 
-                          font=dict(size=12), xanchor="right")
-    
-    for texto, pos in labels_x:
-        fig.add_annotation(text=texto, x=pos, y=-0.3, showarrow=False, 
-                          font=dict(size=12), yanchor="top")
-
-def criar_texto_eixos(colunas_x, pesos_x, colunas_y, pesos_y, nome_map):
-    """Cria texto explicativo dos eixos"""
-    texto_x = ", ".join([f"{nome_map.get(v, v)} (peso {p})" for v, p in zip(colunas_x, pesos_x)])
-    texto_y = ", ".join([f"{nome_map.get(v, v)} (peso {p})" for v, p in zip(colunas_y, pesos_y)])
-    return f"<b>Eixo X:</b> {texto_x}<br><b>Eixo Y:</b> {texto_y}"
 
 # ===== GRÁFICOS DE SÉRIE TEMPORAL =====
+@st.cache_data
 def grafico_nota_producao_series(df, empresa_sel, unidade_sel):
-    """Gráfico de série temporal da nota de produção otimizado"""
-    df_filtrado = filtrar_dados_base(df, empresa_sel, unidade_sel)
-    
-    fig = px.line(
-        df_filtrado,
-        x="competencia",
-        y="nota_producao",
-        color="unidade" if unidade_sel == "Todas" else None,
-        title="Série Histórica - Nota Produção",
-        markers=True
-    )
-    
+    """Série temporal mostrando o valor da coluna 'nota_producao' visível em todos os markers."""
+    df_filtrado = filtrar_dados_base(df, empresa_sel, unidade_sel).copy()
+
+    # garantir formato e ordenação
+    df_filtrado["competencia"] = df_filtrado["competencia"].astype(str)
+    df_filtrado = df_filtrado.sort_values("competencia")
+    df_filtrado["nota_producao"] = pd.to_numeric(df_filtrado["nota_producao"], errors="coerce")
+
+    # coluna de texto formatada (vazia quando NaN)
+    df_filtrado["text_label"] = df_filtrado["nota_producao"].apply(lambda v: f"{v:.2f}" if pd.notna(v) else "")
+
+    if unidade_sel == "Todas":
+        fig = px.line(
+            df_filtrado,
+            x="competencia",
+            y="nota_producao",
+            color="unidade",
+            markers=True,
+            text="text_label",
+            title="Série Histórica - Nota Produção"
+        )
+        fig.update_traces(
+            mode="lines+markers+text",
+            textposition="top center",
+            textfont=dict(size=9, color="#111"),
+            texttemplate="%{text}"
+        )
+    else:
+        fig = px.line(
+            df_filtrado,
+            x="competencia",
+            y="nota_producao",
+            markers=True,
+            text="text_label",
+            title="Série Histórica - Nota Produção"
+        )
+        fig.update_traces(
+            mode="lines+markers+text",
+            textposition="top center",
+            textfont=dict(size=10, color="#111"),
+            texttemplate="%{text}"
+        )
+
     fig.update_layout(
         xaxis_title="Competência",
         yaxis_title="Nota de Produção",
         height=500,
-        **LAYOUT_CONFIG
+        **(LAYOUT_CONFIG if 'LAYOUT_CONFIG' in globals() else {})
     )
-    
     return fig
+
 
 # ===== GRÁFICOS DE CUSTO =====
 @st.cache_data
@@ -262,24 +163,31 @@ def grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_sel, competencia_se
     titulo = f"{empresa_sel}"
     if unidade_sel != "Todas":
         titulo += f" – {unidade_sel}<br><br>"
-    
-    
+        
     fig.update_layout(
         title=titulo,
         xaxis_title="Competência",
         yaxis_title="Valor (R$)",
         barmode="group",
-        height=550,
+        height=650,
+        width=900,
         xaxis_tickangle=-45,
+        xaxis=dict(
+            tickmode='array',
+            tickvals=list(df_custo["competencia"]),
+            ticktext=list(df_custo["competencia"].astype(str))
+        ),
         legend=dict(        
-        x=.95,         # mais à esquerda
-        y=1.03,
+        x=.97,         # mais à esquerda
+        y=1.13,
         xanchor='left', # ancoragem à direita
         bgcolor='rgba(0,0,0,0)',  # fundo transparente (opcional)
         ),
         showlegend=True,
             **LAYOUT_CONFIG
     )
+    
+    
     
     return fig
 
@@ -375,7 +283,7 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
         ("📥 Receita Prevista", f"R$ {metricas['receita_prevista']:,.0f}"),
         ("📤 Receita Realizada", f"R$ {metricas['receita_realizada']:,.0f}"),
         ("📊 Proposta Orçamentária", f"R$ {metricas['proposta']:,.0f}"),
-        ("📈 Execução das Receitas", f"{perc_exec_receita:.2f}%")
+        ("📈 Execução das Receitas Operacionais", f"{perc_exec_receita:.2f}%")
     ]
     
     for col, (titulo, valor) in zip([col1, col2, col3, col4], cards_linha1):
@@ -386,7 +294,7 @@ def exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, co
     cards_linha2 = [
         ("💸 Despesa Prevista", f"R$ {metricas['despesa_prevista']:,.0f}"),
         ("💰 Despesa Liquidada", f"R$ {metricas['despesa_liquidada']:,.0f}"),
-        ("📊 Execução Orçamentária", f"{perc_exec_orcamento:.2f}%")
+        ("📊 Execução Orçamentária" , f"{perc_exec_orcamento:.2f}%")
     ]
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     for col, (titulo, valor) in zip([col5, col6, col7], cards_linha2):
@@ -471,7 +379,7 @@ def grafico_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, coluna_pe
         xaxis_title="Competência",
         yaxis_title="Valor (R$)",
         barmode="group",
-        height=550,
+        height=650,
         width=900,
         xaxis_tickangle=-45,
         xaxis=dict(
@@ -481,7 +389,7 @@ def grafico_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, coluna_pe
         ),
         legend=dict(        
         x=.97,         # mais à esquerda
-        y=1.03,
+        y=1.13,
         xanchor='left', # ancoragem à direita
         bgcolor='rgba(0,0,0,0)',  # fundo transparente (opcional)
         ),
@@ -518,8 +426,8 @@ def exibir_cards_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, colu
         if coluna_nota in df_filtrado.columns else None
     )
     
-    cor_nota = "#2ecc71" if nota is not None and nota >= 1.5 else "rgba(0,0,0,0.7)"
-    st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
+    cor_nota = "#588157" if nota is not None and nota >= 1 else "#8b8fa0"
+    #st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     # Exibição dos cards
     col1, col2, col3 = st.columns(3)
     cards = [
@@ -528,8 +436,9 @@ def exibir_cards_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, colu
         ("📈 Executado", f"{saldo:.2f}%" if saldo is not None else "-")
     ]
     
-    cores = ["#3f4f6b", "#3f4f6b", cor_nota]
-    st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
+
+    cores = ["rgba(0, 48, 124, 0.7)", "rgba(0, 48, 124, 0.7)", cor_nota]
+    #st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     for col, (titulo, valor), cor in zip([col1, col2, col3], cards, cores):
         with col:
             st.markdown(criar_card_html(titulo, valor, cor), unsafe_allow_html=True)
