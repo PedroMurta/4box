@@ -3,11 +3,13 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 
-import plotly.graph_objects as go
+
 
 def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
     """Gráfico radar com valores padronizados - SEST vs SENAT"""
-
+    
+    
+    
     # Mapas de período/sufixo
     mapeamento_filtro = {
         "Mês": "competencia",
@@ -21,35 +23,35 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
         "Semestre": "_semestral",
         "Ano": "_anual",
     }
-
+    
     filtro_col = mapeamento_filtro[agrupamento_opcao]
     sufixo = mapeamento_sufixo[agrupamento_opcao]
-
+    
     # Cores por empresa
     cores_borda = {"SEST": "rgba(31,119,180,0.9)", "SENAT": "rgba(255,127,14,0.9)"}
     cores_fill  = {"SEST": "rgba(31,119,180,0.30)", "SENAT": "rgba(255,127,14,0.30)"}
-
+    
     # Ordem dos eixos
-    indicadores = ["💸 Custo", "🥼 Produção", "🌟 NPS", "💰 Equilíbrio Financeiro", "📊 Orçamento", "📈 Receita"]
+    indicadores = ["💸 Custo", "🥼 Produção", "💰 Equilíbrio Financeiro", "📊 Orçamento", "📈 Receita Operacional"]
     empresas = ["SEST", "SENAT"]
-
+    
     fig = go.Figure()
     traces_adicionados = 0
-
+    
     for empresa in empresas:
         dfe = df[(df["empresa"] == empresa) & (df[filtro_col] == competencia_sel)]
         if unidade_sel != "Todas":
             dfe = dfe[dfe["unidade"] == unidade_sel]
-
+        
         if dfe.empty:
             continue
-
+        
         # Obtém valores padronizados (0–1) mantendo a ordem dos indicadores
         valores = obter_valores_padronizados(dfe, sufixo)
         # Fecha o polígono sem mutar listas originais
         r_vals = valores + [valores[0]]
         th_vals = indicadores + [indicadores[0]]
-
+        
         fig.add_trace(go.Scatterpolar(
             r=r_vals,
             theta=th_vals,
@@ -60,7 +62,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
             hovertemplate="<b>%{theta}</b><br>Valor: %{r:.2f}<extra>" + empresa + "</extra>"
         ))
         traces_adicionados += 1
-
+    
     if traces_adicionados == 0:
         fig.add_annotation(
             text="Sem dados disponíveis para os filtros selecionados",
@@ -75,7 +77,7 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
             showlegend=False
         )
         return fig
-
+    
     # Layout final com legenda à esquerda
     fig.update_layout(
         polar=dict(
@@ -101,11 +103,10 @@ def grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamen
     )
     return fig
 
-
-
 def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
     """Cards com valores padronizados - SEST vs SENAT"""
     
+   
     # Mapeamento
     coluna_periodo = {
         "Mês": "competencia",
@@ -124,11 +125,10 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
     # Configuração dos indicadores
     indicadores_config = [
         ("custo", "💸 Custo", "custo"),
-        ("producao", "🥼 Produção", "producao"),
-        ("nps", "🌟 NPS", "nps"),
-        ("caixa", "💰 Equilíbrio Financeiro", "caixa"),        
+        ("producao", "🥼 Produção", "producao"),        
+        ("caixa", "💰 Equilíbrio Financeiro", "caixa"),                
         ("orcamento", "📊 Orçamento", "orcamento"),
-        ("receita", "📈 Receita", "receita")
+        ("receita_operacional", "📈 Receita Operacional", "receita")
     ]
     
     # Título
@@ -136,23 +136,21 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
     st.markdown(
         f"""
         <div style='
-            background-color: rgba(0, 48, 124, 0.7);            
+            background-color: rgba(0, 48, 124, 0.7);                       
             color: white;
             border-radius: 15px;
             padding: 15px;
             text-align: center;
             font-weight: bold;
             font-size: 18px;
-            margin-bottom: 16px;            
+            margin-bottom: 16px;                    
         '>
             <p style='font-size: 25 px;'><b>INDICADORES POR PERÍODO ({agrupamento_opcao})</b></p>
-            <i>{unidade_sel}</i> <br>
-           
+            <i>{unidade_sel}</i> <br>                    
         </div>
         """,
         unsafe_allow_html=True
     )
-    
     
     # Processar dados para ambas as empresas
     empresas = ['SEST', 'SENAT']
@@ -178,11 +176,10 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
                 # Para múltiplas linhas, fazer média dos valores padronizados
                 colunas_padronizadas = [
                     f"nota_custo{sufixo}_padronizada",
-                    f"nota_producao{sufixo}_padronizada",
-                    f"nota_nps{sufixo}_padronizada",
+                    f"nota_producao{sufixo}_padronizada",                    
                     f"nota_caixa{sufixo}_padronizada", 
                     f"nota_orcamento{sufixo}_padronizada",
-                    f"nota_receita{sufixo}_padronizada"
+                    f"nota_receita_operacional{sufixo}_padronizada"
                 ]
                 colunas_existentes = [col for col in colunas_padronizadas if col in df_filtrado.columns]
                 if colunas_existentes:
@@ -198,7 +195,7 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
             # Dados vazios se não encontrar
             dados_empresas[empresa] = {
                 'row': pd.Series(),
-                'valores_agregados': {key: 0 for key in ["custo", "orcamento", "caixa", "nps", "producao", "receita"]}
+                'valores_agregados': {key: 0 for key in ["custo", "orcamento", "caixa", "producao", "receita_operacional"]}
             }
     
     # Exibir cards para cada indicador
@@ -227,10 +224,11 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
                     border-radius: 10px;
                     padding: 15px;
                     text-align: center;
-                    margin-bottom: 10px;                    
+                    margin-bottom: 10px;
                     font-weight: bold;
                 ">
-                    <div style="font-size: 21px; margin-bottom: 8px;">                        
+                    <div style="font-size: 21px; margin-bottom: 8px;">
+                        SEST                            
                     </div>
                     <div style="font-size: 21px; margin-bottom: 8px; color: black;">
                         {nome_display} 
@@ -262,10 +260,11 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
                     border-radius: 10px;
                     padding: 15px;
                     text-align: center;
-                    margin-bottom: 10px;                    
+                    margin-bottom: 10px;
                     font-weight: bold;
                 ">
-                    <div style="font-size: 21px; margin-bottom: 8px;">                        
+                    <div style="font-size: 21px; margin-bottom: 8px;">
+                        SENAT                            
                     </div>
                     <div style="font-size: 21px; margin-bottom: 8px; color: #333;">
                         {nome_display} 
@@ -276,7 +275,6 @@ def exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupament
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-
 
 def obter_valores_originais(df_filtrado):
     """
@@ -292,16 +290,14 @@ def obter_valores_originais(df_filtrado):
     # Definir colunas originais na ordem correta
     colunas_ordem = [
         f"nota_custo",
-        f"nota_producao",
-        f"nota_nps",
+        f"nota_producao",       
         f"nota_caixa",
         f"nota_orcamento",
-        f"nota_receita"
+        f"nota_receita_operacional"
     ]
     
     # Verificar quais colunas existem
     colunas_existentes = [col for col in colunas_ordem if col in df_filtrado.columns]
-    
     
     # Obter valores (média se múltiplas linhas)
     if len(df_filtrado) == 1:
@@ -349,11 +345,10 @@ def obter_valores_padronizados(df_filtrado, sufixo):
     # Definir colunas padronizadas na ordem correta
     colunas_ordem = [
         f"nota_custo{sufixo}_padronizada",
-        f"nota_producao{sufixo}_padronizada",
-        f"nota_nps{sufixo}_padronizada",
+        f"nota_producao{sufixo}_padronizada",        
         f"nota_caixa{sufixo}_padronizada",
         f"nota_orcamento{sufixo}_padronizada",
-        f"nota_receita{sufixo}_padronizada"
+        f"nota_receita_operacional{sufixo}_padronizada"
     ]
     
     # Verificar quais colunas existem
@@ -382,7 +377,6 @@ def obter_valores_padronizados(df_filtrado, sufixo):
     
     return valores
 
-
 def calcular_valores_periodo(df_filtrado):
     """Calcula valores agregados por período usando as colunas do DataFrame"""
     
@@ -402,7 +396,7 @@ def calcular_valores_periodo(df_filtrado):
     # Produção (média ponderada ou soma)
     nota_producao = df_filtrado["nota_producao"].mean() * 100
     nota_nps = df_filtrado["nota_nps"].mean() * 100
-
+    
     # Calcular indicadores
     custo = (soma_custo_realizado / soma_meta * 100) if soma_meta > 0 else 0
     orcamento = (despesa_liquidada / despesa_prevista * 100) if despesa_prevista > 0 else 0
@@ -410,6 +404,7 @@ def calcular_valores_periodo(df_filtrado):
     producao = nota_producao
     nps = nota_nps
     receita = (receita_realizada / receita_prevista * 100) if receita_prevista > 0 else 0
+    
     
     return {
         "custo": custo,
@@ -419,7 +414,6 @@ def calcular_valores_periodo(df_filtrado):
         "producao": producao,
         "receita": receita
     }
-
 
 def debug_colunas_disponiveis(df):
     """Mostra colunas disponíveis para debug"""
@@ -435,84 +429,3 @@ def debug_colunas_disponiveis(df):
     for col in sorted(colunas_relevantes):
         print(f"   - {col}")
     return colunas_relevantes
-
-
-
-
-
-'''
-# 14. ABA METODOLOGIA
-elif aba_selecionada == "Metodologia":
-    st.markdown(f"<br><br>", unsafe_allow_html=True)
-
-    st.markdown("""
-### 📐 Metodologia de Padronização dos Indicadores
-
-A padronização tem como objetivo **tornar os indicadores comparáveis** entre unidades, períodos e contextos distintos, permitindo análises mais consistentes e justas.
-
----
-
-### 🔢 Fórmulas de Cálculo das Notas
-
-| Indicador                | Fórmula Utilizada                                              | Interpretação                                                                 |
-|--------------------------|----------------------------------------------------------------|--------------------------------------------------------------------------------|
-| **Produção**             | `1 + ((Produção - Meta) / 100)`                                 | Avalia o desempenho da produção em relação à meta de 100%                      |
-| **Receita**              | `1 + ((Receita - Meta) / 100)`                              | Mede o percentual de alcance da receita em relação à previsão                 |
-| **Custo**                | `1 + ((Meta - Execução do Custo) / 100)`                       | Penaliza execuções acima da meta (quanto menor o custo, melhor a nota)        |
-| **Orçamento**            | `1 - (abs(Meta - Execução Orçamentária) / 100)`                 | Nota máxima quando há aderência total à meta orçamentária                     |
-| **Caixa**                | `1 + ((Caixa - Meta) / 100)`                          | Avalia o saldo financeiro em relação à meta esperada                          |
-| **Capacidade Produtiva** | `Capacidade Produtiva / 100`                                   | Mede o nível de uso da capacidade produtiva da unidade                        |
-| **NPS**                  | `Nota NPS` (sem transformação)                                 | Já é uma nota padronizada de satisfação do cliente                            |
-
----
-
-### ⏲️ Periodicidade das Notas
-
-As notas são calculadas para os seguintes períodos:
-
-- **Mensal** (por competência)
-- **Trimestral** (T1 a T4)
-- **Semestral** (S1 e S2)
-- **Anual** (valor agregado do ano)
-
-Cada período considera os dados por **empresa(SEST ou SENAT)**, **unidade operacional** e **tempo**.
-
----
-
-### ⚙️ Regras Complementares
-
-- **Notas ausentes** são preenchidas com `0`, evitando distorções na análise.
-- Para competências **anteriores a maio de 2024**, aplica-se uma **nota NPS padrão igual a 1**, devido à ausência de dados.
-
----
-
-### ✂️ Tratamento de Valores Extremos (Clipping)
-
-Antes da normalização das notas para a escala de **0 a 1**, é realizada uma técnica chamada **clipping**, que remove os valores extremos (_*outliers*_).
-
-Esses valores muito altos ou baixos podem distorcer os resultados e gerar interpretações erradas sobre o desempenho das unidades. O clipping atua como um "corte nas pontas", focando nos valores mais representativos do conjunto.
-
-#### Limites aplicados por indicador:
-
-| Indicador         | Limite Inferior | Limite Superior |
-|-------------------|------------------|------------------|
-| **Orçamento**     | 5%               | Sem limite       |
-| **Receita**       | 5%               | 85%              |
-| **Custo**         | 20%              | 95%              |
-| **Produção**      | 5%               | 85%              |
-| **Caixa**         | 5%               | 90%              |
-
-> Após esse tratamento, os valores restantes são normalizados para a escala de **0 a 1**, onde:
->
-> - **0** representa o pior desempenho (dentro do intervalo considerado);
-> - **1** representa o melhor desempenho (dentro do intervalo considerado).
-
-As notas de **NPS** e **Capacidade Produtiva** não passam por essa normalização, mantendo seus valores originais.
-
----
-
-Essa metodologia permite uma avaliação mais justa e comparável entre diferentes unidades, períodos e contextos operacionais.
-""")
-
-
-'''
