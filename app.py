@@ -12,6 +12,27 @@ from graficos import (
 )
 from painel_especialidades import exibir_metricas_com_donut
 from radar import grafico_radar_notas, exibir_cards_radar
+import os
+
+# senha guardada nos secrets
+PASSWORD = st.secrets.get("APP_PASSWORD")
+
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+if not st.session_state.autenticado:
+    placeholder = st.empty()
+    with placeholder.container():
+        st.markdown("### 🔒 Login necessário")
+        senha = st.text_input("Senha:", type="password")
+        if st.button("Entrar"):
+            if senha == PASSWORD:
+                st.session_state.autenticado = True
+                placeholder.empty()  # limpa o "popup"
+                st.rerun()  # recarrega para liberar o app
+            else:
+                st.error("Senha incorreta.")
+    st.stop()
 
 # 2. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(
@@ -29,7 +50,7 @@ with open("estilo.css") as f:
 @st.cache_data
 def carregar_e_processar_dados():
     """Carrega e processa todos os dados de uma só vez"""
-    df = pd.read_parquet("indicadores.parquet")
+    df = pd.read_parquet("indicadores1.parquet")
     
     # Renomeações
     df.rename(columns={
