@@ -5,7 +5,7 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 from filtros import sidebar_filtros
-from four_box import grafico_fourbox
+from matriz_desempenho import grafico_fourbox
 from graficos import (
     grafico_nota_producao_series, grafico_custo_realizado_vs_meta, 
     exibir_cards_orcamentarios, grafico_fluxo_caixa, exibir_cards_fluxo_caixa
@@ -14,7 +14,6 @@ from painel_especialidades import exibir_metricas_com_donut
 from radar import grafico_radar_notas, exibir_cards_radar
 import os
 
-# senha guardada nos secrets
 PASSWORD = st.secrets.get("APP_PASSWORD")
 
 if "autenticado" not in st.session_state:
@@ -34,12 +33,15 @@ if not st.session_state.autenticado:
                 st.error("Senha incorreta.")
     st.stop()
 
+# CONSTANTES GLOBAIS
+UNIDADE_PADRAO = "UNIDADE A - Nº 12 - CARIACICA/ES"
+
 # 2. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(
     layout="wide",
     page_title="Matriz Desempenho",
     initial_sidebar_state="expanded",
-    page_icon="icone_ss.png"
+    page_icon="sestsenat_0.png"
 )
 
 # CSS
@@ -96,27 +98,33 @@ COLUNA_PERIODO_MAP = {
 
 # Configuração de abas (constante)
 ABAS_CONFIG = {
-    "options": ["Matriz Desempenho", "Radar", "Atendimentos", "Orçamento/Receita", "Custo", "Equilíbrio Financeiro"],
-    "icons": ["bar-chart", "activity", "clock", "box", "graph-up", "credit-card"],
+    "options": ["Matriz Desempenho", "Radar",  "Atendimentos", "Orçamento/Receita", "Custo", "Equilíbrio Financeiro"],
+    "icons": ["bar-chart", "activity",  "clock", "box", "graph-up", "credit-card"],
     "styles": {
         "container": {"padding": "0!important", "background-color": "#fafafa"},
-        "icon": {"color": "#b7bc75", "font-size": "18px"},
-        "nav-link": {"font-size": "12px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
+        "icon": {"color": "#b7bc75", "font-size": "15px"},
+        "nav-link": {"font-size": "15px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
         "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
     }
 }
 
-# Configuração de abas (constante)
-#ABAS_CONFIG = {
-#    "options": ["Matriz Desempenho", "Radar"],
-#    "icons": ["bar-chart", "activity"],
-#    "styles": {
-#        "container": {"padding": "0!important", "background-color": "#fafafa"},
-#        "icon": {"color": "#b7bc75", "font-size": "22px"},
-#        "nav-link": {"font-size": "20px", "font-weight": "500", "color": "#3f4f6b", "margin": "0 10px"},
-#        "nav-link-selected": {"background-color": "#3f4f6b", "color": "white"},
-#    }
-#}
+def aplicar_unidade_padrao(unidade_sel, df):
+    """
+    Aplica a unidade padrão quando necessário
+    
+    Args:
+        unidade_sel: Unidade selecionada pelo usuário
+        df: DataFrame com os dados
+    
+    Returns:
+        str: Unidade a ser utilizada (padrão ou selecionada)
+    """
+    if unidade_sel == "Todas":
+        # Verificar se a unidade padrão existe nos dados
+        unidades_disponiveis = df["unidade"].unique()
+        if UNIDADE_PADRAO in unidades_disponiveis:
+            return UNIDADE_PADRAO
+    return unidade_sel
 
 def main():
     # Carregamento único dos dados
@@ -144,6 +152,7 @@ def main():
                            coluna_periodo, variaveis_x, pesos_x, variaveis_y, 
                            pesos_y, nome_map, filtro_col)
     
+    
     elif aba_selecionada == "Atendimentos":
         renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, 
                                    coluna_periodo)
@@ -156,8 +165,7 @@ def main():
                                coluna_periodo)
     
     elif aba_selecionada == "Radar":
-        renderizar_aba_radar(df, empresa_sel, unidade_sel, competencia_sel, 
-                            agrupamento_opcao)
+        renderizar_aba_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao)
     
     elif aba_selecionada == "Equilíbrio Financeiro":
         renderizar_aba_caixa(df, empresa_sel, unidade_sel, competencia_sel, 
@@ -167,6 +175,10 @@ def main():
 def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel, 
                        coluna_periodo, variaveis_x, pesos_x, variaveis_y, 
                        pesos_y, nome_map, filtro_col):
+    
+    # Para a Matriz Desempenho (fourbox), usar a unidade selecionada como está
+    # NÃO aplicar unidade padrão aqui
+    
     fig = grafico_fourbox(
         df_filtro, empresa_sel, competencia_sel, unidade_sel,
         coluna_periodo, variaveis_x, pesos_x, variaveis_y, pesos_y,
@@ -207,7 +219,7 @@ def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel,
         `Necessidade de reorientação estratégica para converter 
         eficiência operacional em resultados de longo prazo.`
         """)
-        
+    
     modebar_to_add = [
         'toggleSpikelines',        # Toggle Spike Lines
         'hoverClosestCartesian',   # Show closest data on hover
@@ -231,47 +243,55 @@ def renderizar_aba_4box(df_filtro, empresa_sel, competencia_sel, unidade_sel,
         }
     }
     
-    st.plotly_chart(fig, use_container_width=True,  config=plotly_config)
+    st.plotly_chart(fig, use_container_width=True, config=plotly_config)
 
 def renderizar_aba_atendimentos(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
+    # Aplicar unidade padrão se necessário
+    unidade_final = aplicar_unidade_padrao(unidade_sel, df)
+    
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     st.subheader("🧾 Produção")
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     with st.expander("ℹ️ Interpretação dos gráficos"):
         st.markdown("""
         ### Gráfico de linhas         
-        > Reflete a índice/nota histórica de produção da UO por competência.
-                    
+        > Reflete a nota histórica de produção da UO por competência.
         #### Gráfico de Donuts
         > Especialidade -> Executado -> meta.
         """)
     
-    st.plotly_chart(grafico_nota_producao_series(df, empresa_sel, unidade_sel), 
+    st.plotly_chart(grafico_nota_producao_series(df, empresa_sel, unidade_final), 
                    use_container_width=True)
-    st.markdown(f"<h4 style='text-align: center;'><b><br>{unidade_sel} ({competencia_sel})</br></h4>", 
+    st.markdown(f"<h4 style='text-align: center;'><b><br>{unidade_final} ({competencia_sel})</br></h4>", 
                unsafe_allow_html=True)
-    exibir_metricas_com_donut(df, unidade_sel, coluna_periodo, competencia_sel)
+    exibir_metricas_com_donut(df, unidade_final, coluna_periodo, competencia_sel)
 
 def renderizar_aba_custo(df, empresa_sel, unidade_sel, competencia_sel):
+    # Aplicar unidade padrão se necessário
+    unidade_final = aplicar_unidade_padrao(unidade_sel, df)
+    
     st.subheader("💸 Custo Realizado vs Meta por Competência")
     with st.expander("ℹ️ Descrição"):
         st.markdown("""
         ### 📊 Interpretação
         > **Meta do Custo**: Valor definido para execução do custo.
-                    
+        
         > **Realizado**: Valor Real executado.
-                    
+        
         > **Coluna Azul**: Valor da meta.
-                    
+        
         > **Coluna Vermelha**: Valor executado superior à meta.
-                    
+        
         > **Coluna Verde**: Valor executado melhor que a meta.
         """)
     
-    st.plotly_chart(grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_sel, competencia_sel), 
+    st.plotly_chart(grafico_custo_realizado_vs_meta(df, empresa_sel, unidade_final, competencia_sel), 
                    use_container_width=True)
 
 def renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
+    # Aplicar unidade padrão se necessário
+    unidade_final = aplicar_unidade_padrao(unidade_sel, df)
+    
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     st.subheader("📦 Indicadores Orçamentários")
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
@@ -279,36 +299,42 @@ def renderizar_aba_orcamento(df, empresa_sel, unidade_sel, competencia_sel, colu
         st.markdown("""
         ### 📊 Descrição:
         > **Execução das Receitas**: Receita Realizada sobre a Prevista.
-                    
+        
         > **Execução Orçamentária**: Despesa Liquidada sobre a Prevista.
         """)
     
-    st.markdown(f"<h4 style='text-align: center;'><b><br>{unidade_sel} ({competencia_sel})</br></h4>", 
+    st.markdown(f"<h4 style='text-align: center;'><b><br>{unidade_final} ({competencia_sel})</br></h4>", 
                unsafe_allow_html=True)
-    exibir_cards_orcamentarios(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo)
+    exibir_cards_orcamentarios(df, empresa_sel, unidade_final, competencia_sel, coluna_periodo)
 
 def renderizar_aba_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao):
+    # Aplicar unidade padrão se necessário
+    unidade_final = aplicar_unidade_padrao(unidade_sel, df)
+    
     st.subheader("📡 Radar de Indicadores")
-    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_sel} ({competencia_sel})</b></h4><br>", 
+    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_final} ({competencia_sel})</b></h4><br>", 
                unsafe_allow_html=True)
     
     col_grafico, col_cards = st.columns([2, 1])
     
     with col_grafico:
-        fig_radar = grafico_radar_notas(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao)
+        fig_radar = grafico_radar_notas(df, empresa_sel, unidade_final, competencia_sel, agrupamento_opcao)
         st.plotly_chart(fig_radar, use_container_width=True)
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     with col_cards:
-        exibir_cards_radar(df, empresa_sel, unidade_sel, competencia_sel, agrupamento_opcao)
+        exibir_cards_radar(df, empresa_sel, unidade_final, competencia_sel, agrupamento_opcao)
 
 def renderizar_aba_caixa(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo):
+    # Aplicar unidade padrão se necessário
+    unidade_final = aplicar_unidade_padrao(unidade_sel, df)
+    
     st.markdown("<div style='margin-top: 30px; <br>'></div>", unsafe_allow_html=True)
     st.markdown("## 💰 Fluxo de Caixa <br>", unsafe_allow_html=True)
-    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_sel} ({competencia_sel})</b></h4><br>", 
+    st.markdown(f"<h4 style='text-align: center;'><b>{unidade_final} ({competencia_sel})</b></h4><br>", 
                unsafe_allow_html=True)
-    exibir_cards_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo)
-    st.plotly_chart(grafico_fluxo_caixa(df, empresa_sel, unidade_sel, competencia_sel, coluna_periodo), 
+    exibir_cards_fluxo_caixa(df, empresa_sel, unidade_final, competencia_sel, coluna_periodo)
+    st.plotly_chart(grafico_fluxo_caixa(df, empresa_sel, unidade_final, competencia_sel, coluna_periodo), 
                    use_container_width=True)
 
 if __name__ == "__main__":

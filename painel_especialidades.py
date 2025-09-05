@@ -114,17 +114,37 @@ def agregar_dados_periodo(df_unidade):
     if len(df_unidade) <= 1:
         return df_unidade.iloc[0] if len(df_unidade) == 1 else {}
     
+    # Especialidades por empresa
+    ESPECIALIDADES_SEST = ["odonto", "fisio", "psico", "nutri", "pale_sest", "elc"]
+    ESPECIALIDADES_SENAT = ["curso_prese", "curso_ead", "pale_senat"]
+    
     agregados = {}
-    for esp_nome in ESPECIALIDADES:
-        esp_col = MAPA_COLUNAS[esp_nome]
-        valor_total = df_unidade[esp_col].sum()
-        meta_total = df_unidade[f"meta_{esp_col}"].sum()
+    
+    # Processar especialidades SEST
+    df_sest = df_unidade[df_unidade['empresa'] == 'SEST'] if 'empresa' in df_unidade.columns else df_unidade
+    for esp_col in ESPECIALIDADES_SEST:
+        if not df_sest.empty:
+            valor_total = df_sest[esp_col].sum()
+            meta_total = df_sest[f"meta_{esp_col}"].sum()
+        else:
+            valor_total = meta_total = 0
         
         agregados[esp_col] = valor_total
         agregados[f"meta_{esp_col}"] = meta_total
-        agregados[f"pct_{esp_col}"] = (
-            100 * valor_total / meta_total if meta_total > 0 else 0
-        )
+        agregados[f"pct_{esp_col}"] = (100 * valor_total / meta_total if meta_total > 0 else 0)
+    
+    # Processar especialidades SENAT
+    df_senat = df_unidade[df_unidade['empresa'] == 'SENAT'] if 'empresa' in df_unidade.columns else df_unidade
+    for esp_col in ESPECIALIDADES_SENAT:
+        if not df_senat.empty:
+            valor_total = df_senat[esp_col].sum()
+            meta_total = df_senat[f"meta_{esp_col}"].sum()
+        else:
+            valor_total = meta_total = 0
+        
+        agregados[esp_col] = valor_total
+        agregados[f"meta_{esp_col}"] = meta_total
+        agregados[f"pct_{esp_col}"] = (100 * valor_total / meta_total if meta_total > 0 else 0)
     
     return agregados
 

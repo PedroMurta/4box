@@ -162,13 +162,13 @@ def grafico_fourbox(
     # Prepara dados de hover
     df_filtro, custom_cols = preparar_dados_hover(df_filtro, colunas_x, colunas_y, nome_map)
 
-    
+    # Nomes legíveis para rodapé
     # Nomes legíveis para rodapé (geração automática)
     BASE_LABELS = {
         'nota_orcamento': 'Orçamento',
         'nota_caixa': 'Equilíbrio Financeiro',
         'nota_nps': 'NPS',
-        'nota_receita': 'Receita',
+        'nota_receita_operacional': 'Receita Operacional',
         'nota_custo': 'Custo',
         'nota_producao': 'Produção',
     }
